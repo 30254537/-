@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MixMind DJ — Ultimate 功能全景</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet" />
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        neon: { pink: "#ff2ea6", purple: "#9d00ff", blue: "#00e5ff", green: "#00ff9d", yellow: "#fff02e", orange: "#ff8c00", red: "#ff0044" },
+        bg: { 0: "#05050a", 1: "#0b0b15", 2: "#12122a", 3: "#1a1a3a" },
+      },
+      fontFamily: {
+        mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+        display: ["Orbitron", "system-ui", "sans-serif"],
+      },
+    },
+  },
+};
+</script>
+<style>
+  html, body { height: 100%; margin: 0; background: radial-gradient(ellipse at top, #12122a 0%, #05050a 60%); color: white; font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  body { min-height: 100vh; }
+  .glass { background: rgba(12, 12, 30, 0.6); backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.06); }
+  .neon-text { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor; }
+  .grid-bg { background-image: linear-gradient(rgba(255, 46, 166, 0.07) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 229, 255, 0.07) 1px, transparent 1px); background-size: 40px 40px; }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #ff2ea6, #9d00ff); border-radius: 4px; }
+  @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 20px rgba(255,46,166,0.5); } 50% { box-shadow: 0 0 40px rgba(255,46,166,0.9); } }
+  .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+  @keyframes float-up { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .feature-card { animation: float-up 0.4s ease-out both; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; }
+  .feature-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,46,166,0.12), transparent 40%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .feature-card:hover::before { opacity: 1; }
+  .feature-card:hover { transform: translateY(-4px); border-color: rgba(255, 46, 166, 0.5); box-shadow: 0 10px 40px rgba(255, 46, 166, 0.2); }
+  .feature-card.hidden-scene { display: none; }
+  .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 9999px; font-size: 9px; font-family: 'JetBrains Mono'; border: 1px solid; white-space: nowrap; }
+  .scene-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-family: 'Orbitron'; font-weight: bold; letter-spacing: 0.1em; }
+  .scene-club { background: rgba(255,46,166,0.15); color: #ff2ea6; }
+  .scene-festival { background: rgba(0,229,255,0.15); color: #00e5ff; }
+  .scene-stream { background: rgba(0,255,157,0.15); color: #00ff9d; }
+  .status-new { background: linear-gradient(90deg,#fff02e,#ff8c00); color: #000; }
+  .status-hot { background: linear-gradient(90deg,#ff0044,#ff2ea6); color: #fff; }
+  .status-core { background: linear-gradient(90deg,#9d00ff,#ff2ea6); color: #fff; }
+  .status-lab { background: linear-gradient(90deg,#00e5ff,#00ff9d); color: #000; }
+  .scene-tab { padding: 8px 18px; border-radius: 10px; font-family: 'Orbitron'; font-weight: 900; font-size: 11px; letter-spacing: 0.2em; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: all 0.2s; }
+  .scene-tab.active { background: linear-gradient(90deg,#ff2ea6,#9d00ff); color: #fff; border-color: transparent; box-shadow: 0 0 20px rgba(255,46,166,0.5); }
+  .scene-tab:not(.active):hover { border-color: rgba(255,46,166,0.4); color: #ff2ea6; }
+  .lang-toggle { background: rgba(12,12,30,0.9); border: 1px solid rgba(0,229,255,0.4); border-radius: 20px; display: inline-flex; font-family: 'Orbitron'; font-weight: bold; font-size: 11px; }
+  .lang-toggle button { padding: 6px 14px; background: transparent; color: #00e5ff; cursor: pointer; border: none; border-radius: 20px; }
+  .lang-toggle button.active { background: linear-gradient(90deg,#ff2ea6,#9d00ff); color: white; }
+  .back-link { background: rgba(12,12,30,0.9); border: 1px solid rgba(157,0,255,0.4); border-radius: 20px; padding: 6px 14px; font-family: 'Orbitron'; font-weight: bold; font-size: 11px; color: #9d00ff; text-decoration: none; }
+  .back-link:hover { background: rgba(157,0,255,0.15); }
+  .section-divider { display: flex; align-items: center; gap: 16px; margin: 32px 0 20px; }
+  .section-divider .line { flex: 1; height: 1px; background: linear-gradient(90deg,transparent,rgba(255,46,166,0.4),transparent); }
+  .drawer { position: fixed; bottom: 0; left: 0; right: 0; max-height: 60vh; background: rgba(5,5,10,0.95); backdrop-filter: blur(30px); border-top: 1px solid rgba(255,46,166,0.5); box-shadow: 0 -20px 60px rgba(255,46,166,0.3); transform: translateY(100%); transition: transform 0.3s; z-index: 500; overflow-y: auto; }
+  .drawer.open { transform: translateY(0); }
+</style>
+</head>
+<body class="grid-bg">
+
+<header class="sticky top-0 z-40 glass border-b border-neon-purple/20 px-6 py-4">
+  <div class="max-w-7xl mx-auto flex items-center gap-4 flex-wrap">
+    <a href="mixmind-preview.html" class="back-link">← <span data-i18n="back">返回主界面</span></a>
+    <div>
+      <h1 class="font-display text-2xl font-black tracking-widest">
+        <span class="text-neon-pink neon-text">MIX</span><span class="text-neon-blue neon-text">MIND</span>
+        <span class="text-neon-yellow text-sm ml-2" style="text-shadow:0 0 10px #fff02e">ULTIMATE</span>
+      </h1>
+      <p class="text-[10px] text-neon-purple font-mono mt-0.5" data-i18n="subtitle">13 件 DJ 神器 · 3 大场景定制</p>
+    </div>
+    <div class="flex-1"></div>
+    <div class="flex items-center gap-2" id="scene-tabs">
+      <button class="scene-tab active" data-scene="all" data-i18n="scene_all">全部</button>
+      <button class="scene-tab" data-scene="club" data-i18n="scene_club">俱乐部</button>
+      <button class="scene-tab" data-scene="festival" data-i18n="scene_festival">音乐节</button>
+      <button class="scene-tab" data-scene="stream" data-i18n="scene_stream">直播</button>
+    </div>
+    <div class="lang-toggle">
+      <button id="lang-zh" class="active" onclick="setLang('zh')">中文</button>
+      <button id="lang-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto p-6 pb-24" id="main">
+  <div id="hero" class="mb-6">
+    <h2 class="font-display text-4xl font-black tracking-wider mb-2">
+      <span class="text-neon-pink neon-text" data-i18n="hero_1">13 件</span>
+      <span class="text-neon-blue neon-text" data-i18n="hero_2">DJ 职业神器</span>
+    </h2>
+    <p class="text-neutral-400 text-sm max-w-3xl" data-i18n="hero_sub">覆盖俱乐部驻场 / 音乐节演出 / 线上直播三大职业场景。点任意卡片查看技术路线。</p>
+    <div id="stats-bar" class="flex gap-6 mt-4 text-xs font-mono"></div>
+  </div>
+  <div id="sections"></div>
+</main>
+
+<div id="drawer" class="drawer">
+  <div class="max-w-5xl mx-auto p-6">
+    <div class="flex items-start gap-4">
+      <div id="drawer-icon" class="text-5xl"></div>
+      <div class="flex-1">
+        <h3 id="drawer-title" class="font-display text-2xl font-bold"></h3>
+        <p id="drawer-sub" class="text-neon-purple text-sm font-mono mt-1"></p>
+      </div>
+      <button onclick="closeDrawer()" class="text-2xl text-neutral-500 hover:text-neon-pink px-2">×</button>
+    </div>
+    <div id="drawer-content" class="mt-5"></div>
+  </div>
+</div>
+
+<script>
+// ============ i18n: base ============
+const I18N = {
+  zh: {
+    back: "返回主界面", subtitle: "13 件 DJ 神器 · 3 大场景定制",
+    scene_all: "全部", scene_club: "俱乐部", scene_festival: "音乐节", scene_stream: "直播",
+    hero_1: "13 件", hero_2: "DJ 职业神器",
+    hero_sub: "覆盖俱乐部驻场 / 音乐节演出 / 线上直播三大职业场景。点任意卡片查看技术路线。",
+    sec_smart: "智能创作", sec_smart_sub: "用 AI 帮你找歌、排歌、做歌",
+    sec_live: "现场演出", sec_live_sub: "演出当下最靠谱的助手",
+    sec_grow: "品质与成长", sec_grow_sub: "让每场演出比上一场更好",
+    stat_total: "功能总数", stat_club: "俱乐部适用", stat_festival: "音乐节适用", stat_stream: "直播适用",
+    tech: "技术实现", scenes: "适用场景", features: "核心能力",
+    view_more: "查看详情", close: "关闭",
+    status_hot: "火热", status_new: "新", status_core: "核心", status_lab: "实验",
+  },
+  en: {
+    back: "Back to Main", subtitle: "13 DJ Power Tools · 3 Stage Scenarios",
+    scene_all: "ALL", scene_club: "CLUB", scene_festival: "FESTIVAL", scene_stream: "STREAM",
+    hero_1: "13", hero_2: "PRO DJ POWER TOOLS",
+    hero_sub: "Tailored for club residents, festival headliners, and livestream creators. Click any card for the tech roadmap.",
+    sec_smart: "SMART CREATION", sec_smart_sub: "AI helps you find, sequence, and build tracks",
+    sec_live: "LIVE PERFORMANCE", sec_live_sub: "Your most reliable on-stage sidekick",
+    sec_grow: "QUALITY & GROWTH", sec_grow_sub: "Make every gig better than the last",
+    stat_total: "Total Tools", stat_club: "Club-ready", stat_festival: "Festival-ready", stat_stream: "Stream-ready",
+    tech: "Tech Stack", scenes: "Scenarios", features: "Core Features",
+    view_more: "View Details", close: "Close",
+    status_hot: "HOT", status_new: "NEW", status_core: "CORE", status_lab: "LAB",
+  },
+};
+
+let currentLang = localStorage.getItem('mixmind_lang') || 'zh';
+let currentScene = 'all';
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('mixmind_lang', lang);
+  document.getElementById('lang-zh').classList.toggle('active', lang === 'zh');
+  document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[lang][key] !== undefined) el.textContent = I18N[lang][key];
+  });
+  if (typeof renderAll === 'function') renderAll();
+}
+window.setLang = setLang;
+</script>
+</body>
+</html>
+
+
+<script>
+// ============ i18n: 13 features ============
+Object.assign(I18N.zh, {
+  // 1. Vocal / Gender / Language
+  f1_name: "人声智能识别",
+  f1_tagline: "男声·女声·语种·情绪 一眼看穿",
+  f1_desc: "不止是『有没有人声』。告诉你性别、语种、是说唱还是演唱、有没有脏话、男高音还是女低音、整首 Acapella 还是 Vocal Chop。",
+  f1_f1: "人声 / 伴奏占比 (0-100%)",
+  f1_f2: "性别: 男声 / 女声 / 合唱 / 对唱",
+  f1_f3: "语种: 中 / 英 / 日 / 韩 / 西 / 葡 / 法",
+  f1_f4: "类型: 说唱 / 演唱 / 口白 / Chop / 整段 Acapella",
+  f1_f5: "音高范围 (C2-F5) + 情绪识别",
+  f1_f6: "脏话 / Explicit 自动标记",
+  f1_tech: "pyannote-audio (说话人分割) + OpenAI Whisper-tiny (语种+歌词) + Demucs (人声占比) + NISQA (音高)",
+
+  // 2. AI Natural Search
+  f2_name: "AI 一句话搜歌",
+  f2_tagline: "用人话筛选曲库 · 告别 10 层菜单",
+  f2_desc: "你说 " + '"' + "找首迪拜 club 风格 peak time，127-129 BPM，带女声，能量 8+" + '"' + " — AI 秒懂并返回 5 首精准匹配。比 Siri 更懂 DJ。",
+  f2_f1: "自然语言 → SQL 查询自动解析",
+  f2_f2: "支持中英混输: " + '"' + "像 Anyma 那种但不要 melodic" + '"',
+  f2_f3: "组合条件: BPM + Key + Energy + 情绪 + 人声",
+  f2_f4: "历史引用: " + '"' + "我上次在 Club XOXO 放的那首" + '"',
+  f2_f5: "风格相似度: " + '"' + "和 Strobe 接得上的" + '"',
+  f2_f6: "完全离线 · 不上传你的任何数据",
+  f2_tech: "本地 Phi-3 mini (3.8B) 或 Qwen2.5-3B · CPU 800ms 响应 · 一次性下载 2GB 纯离线",
+
+  // 3. SET Sequencing Learning
+  f3_name: "SET 编排学习",
+  f3_tagline: "AI 学你的 DJ 签名 · 或学偶像的套路",
+  f3_desc: "导入你过去 50 场 set 或一场 Tale of Us 现场录音 — AI 提取『编排 DNA』，生成符合你(或偶像)风格的新 setlist。",
+  f3_f1: "解析你的 Rekordbox / Serato 历史播放记录",
+  f3_f2: "BPM 走向曲线 + Key 跳跃模式提取",
+  f3_f3: "能量弧线 / Drop 频率 / Breakdown 时长统计",
+  f3_f4: "偶像逆向: 上传录音自动识别每首歌+时间轴",
+  f3_f5: "生成你的 'DJ 签名' 可分享给朋友",
+  f3_f6: "一键应用: " + '"' + "用 Solomun 风格给我排 2 小时" + '"',
+  f3_tech: "Transformer seq2seq (tracklist 生成) + shazam-style 指纹 (偶像 set 反向识别) + 贝叶斯统计 (编排规律)",
+
+  // 4. Live Recording + Cue Sheet
+  f4_name: "现场录音 + 时间轴",
+  f4_tagline: "边演边录 · 自动生成时间戳歌单",
+  f4_desc: "USB 连混音器自动录整场 set，AI 识别每首歌切入切出点。生成带时间戳的歌单，上传 Mixcloud 带可跳转评论。",
+  f4_f1: "从 DJ 混音器主输出直接 48kHz 录音",
+  f4_f2: "AI 自动识别每首歌 + 精确到秒的时间戳",
+  f4_f3: "生成 cue sheet (CUE / M3U / JSON)",
+  f4_f4: "一键上传 Mixcloud / SoundCloud (含分段标记)",
+  f4_f5: "演出后自动邮件发送完整 tracklist",
+  f4_f6: "支持 24-bit 无损 + 多声道录音",
+  f4_tech: "pyaudio + sounddevice (录音) + Chromaprint (AcoustID 指纹识别) + Mixcloud API (分段评论)",
+
+  // 5. Mashup Genie
+  f5_name: "AI Mashup 精灵",
+  f5_tagline: "两首歌一键合体 · 智能判断最佳组合方式",
+  f5_desc: "选两首歌 → AI 分析哪种 mashup 方式最好听: A 人声+B 伴奏？A intro+B drop？Double Drop？自动 BPM+Key 对齐，30 秒预览。",
+  f5_f1: "智能判断: 人声叠伴奏 / intro-drop / double drop",
+  f5_f2: "自动 BPM sync (不超过 ±8% 保音质)",
+  f5_f3: "智能 pitch shift 到兼容调性 (不变调)",
+  f5_f4: "30 秒试听预览 · 不满意一键换方案",
+  f5_f5: "导出 Ableton / Rekordbox 工程文件",
+  f5_f6: "版权检查: 标记『建议仅现场使用』",
+  f5_tech: "Demucs 4-stem 分离 + librosa.effects.time_stretch (不变调变速) + FAISS 和声兼容性搜索",
+
+  // 6. Crowd Reading AI
+  f6_name: "观众反应 AI",
+  f6_tagline: "手机监听欢呼声 · 实时热度评分",
+  f6_desc: "iPad/手机放 DJ 台监听环境音。AI 分析欢呼 dB + 频谱判断每首歌的观众热度。演出后生成热力图。杀手锏功能。",
+  f6_f1: "实时每首歌热度评分 (0-100)",
+  f6_f2: "自动识别: 欢呼 / 尖叫 / 鼓掌 / 跟唱",
+  f6_f3: "DJ 台实时大字提示: " + '"' + "这首炸了 · 再来一首类似的" + '"',
+  f6_f4: "演出后热力图: 哪段炸哪段冷",
+  f6_f5: "场地记忆: 下次来 Club XOXO 避开冷场歌",
+  f6_f6: "隐私保护: 不录音不保存声纹",
+  f6_tech: "iOS/Android 原生 Core Audio + YAMNet (环境声分类) + 自定义 CNN (欢呼强度回归)",
+
+  // 7. DJ Coach
+  f7_name: "AI DJ 教练",
+  f7_tagline: "分析你最近 10 场 set · 指出弱点",
+  f7_desc: "" + '"' + "你过度依赖 Camelot 8A→9A 过渡(12 场用了 47 次)。peak 能量曲线掉太快。11B-12B 你一次没用过。" + '"' + " 给出针对性练习建议。",
+  f7_f1: "Camelot 使用热力图 + 薄弱区域警告",
+  f7_f2: "过渡技术统计: cut / blend / echo / loop",
+  f7_f3: "能量曲线分析 + 和偶像对比",
+  f7_f4: "曲库利用率: 有多少好歌你从未现场放过",
+  f7_f5: "针对性每日训练任务",
+  f7_f6: "成长曲线: 看 6 个月前 vs 现在",
+  f7_tech: "时序分析 (pandas) + 聚类 (sklearn.cluster) + 风格嵌入对比 (triplet loss)",
+});
+
+Object.assign(I18N.zh, {
+  // 8. Venue DNA
+  f8_name: "场地基因库",
+  f8_tagline: "每个场地的独特 DNA · 定制化推荐",
+  f8_desc: "记录每场演出: 场地 / 时段 / 观众年龄 / 音响 / 当晚哪首炸。下次去同场地自动套用最佳策略。",
+  f8_f1: "场地档案: 容量 / 音响 / 舞池布局",
+  f8_f2: "时段模板: 开场 / 暖场 / 峰值 / 深夜",
+  f8_f3: "观众画像: 年龄段 / 音乐偏好",
+  f8_f4: "联动 Crowd Reading: 哪首在此场地炸",
+  f8_f5: "避坑提示: 避免上次凉场的曲目",
+  f8_f6: "导出场地专属歌单模板",
+  f8_tech: "SQLite 关系型存储 + 协同过滤推荐 + 时间序列分解 (STL)",
+
+  // 9. MIDI/OSC Live Link
+  f9_name: "MIDI/OSC 实时联动",
+  f9_tagline: "硬件控制器 + 视觉软件 无缝打通",
+  f9_desc: "Pioneer DDJ / CDJ / Denon Prime 接入后，按键可触发 MixMind 动作。Drop 触发 Resolume 闪光。VJ 视觉自动对拍。",
+  f9_f1: "支持 Pioneer / Denon / Rane / Native Instruments",
+  f9_f2: "自定义按键映射 (Learn Mode)",
+  f9_f3: "OSC 发送给 Resolume / VDMX / TouchDesigner",
+  f9_f4: "Drop 自动触发闪灯 / 烟雾 / 激光",
+  f9_f5: "Ableton Link 全局同步时钟",
+  f9_f6: "DMX 灯光输出 (通过 OSC 桥)",
+  f9_tech: "python-rtmidi (MIDI) + python-osc (OSC) + Ableton Link SDK + BPM 子拍精确对齐",
+
+  // 10. Pre-Gig Checklist
+  f10_name: "演出前自检",
+  f10_tagline: "一键扫描歌单 · 消除所有隐患",
+  f10_desc: "上台前最后一道防线: Key 冲突 / 响度跳变 / 假 320K / Cue 点缺失 / 文件丢失。10 秒告诉你所有风险点。",
+  f10_f1: "Key Clash 检测 (相邻歌 Camelot 跳 >2 格警告)",
+  f10_f2: "响度差异检测 (超过 ±3 LUFS 警告)",
+  f10_f3: "假 320K / 低质量文件警告",
+  f10_f4: "Cue 点缺失或错位检测",
+  f10_f5: "文件路径有效性检查",
+  f10_f6: "BPM 跳跃警告 (相邻歌差 >10 BPM)",
+  f10_tech: "规则引擎 + Rekordbox XML 解析 + 文件系统 stat 检查",
+
+  // 11. Serendipity Shuffle
+  f11_name: "惊喜轮换",
+  f11_tagline: "AI 挑一首 '你很久没放但今天合适' 的歌",
+  f11_desc: "打破套路，保持新鲜感。不是随机 — 是结合今天场地/观众/能量状态的精准'意外'。",
+  f11_f1: "'尘封遗珠': 超过 90 天没放但曾获 8+ 评分",
+  f11_f2: "场景匹配: 符合当下场地 DNA",
+  f11_f3: "能量延续: 不打断当前曲线",
+  f11_f4: "和声兼容: Camelot 不冲突",
+  f11_f5: "意外指数: 1-10 可调 (保守→冒险)",
+  f11_f6: "学习机制: 成功了的下次权重提升",
+  f11_tech: "多臂老虎机 (UCB1 算法) · 平衡 exploration vs exploitation",
+
+  // 12. Smart Tag Cleaner
+  f12_name: "智能标签清洁",
+  f12_tagline: "AI 规范化所有乱七八糟的 ID3 标签",
+  f12_desc: "几千首歌 ID3 大小写/拼写/feat.写法不统一？AI 自动识别规范化 + 补封面 + 识别同一艺人的不同写法。",
+  f12_f1: "规范化艺人名 (DJ Snake & Lil Jon = Lil Jon, DJ Snake)",
+  f12_f2: "feat./ft./featuring/vs. 统一格式",
+  f12_f3: "自动补全封面 (Discogs + MusicBrainz API)",
+  f12_f4: "识别并修正错标年份 / 厂牌",
+  f12_f5: "中英混合标题智能拆分",
+  f12_f6: "批量操作前预览 + 一键撤销",
+  f12_tech: "MusicBrainz API + fuzzywuzzy (模糊匹配) + 正则规范化 + 原标签备份",
+
+  // 13. Track Lifecycle
+  f13_name: "曲目生命周期",
+  f13_tagline: "每首歌的'保鲜期'+'巅峰期'追踪",
+  f13_desc: "这首歌是不是快过气了？半年前很火但最近观众反应下滑？提醒你'该雪藏了'或'该重启了'。",
+  f13_f1: "播放历史: 每次现场/练习记录",
+  f13_f2: "观众评分趋势 (来自 Crowd Reading)",
+  f13_f3: "'该退役'警告: 连续 5 场评分下降",
+  f13_f4: "'该重启'建议: 半年没放但曾评 9+",
+  f13_f5: "对比同期: 这首 vs 同风格其他歌",
+  f13_f6: "榜单对比: 是否还在 Beatport Top 100",
+  f13_tech: "时间序列分析 (Prophet) + 异常检测 (IsolationForest) + Beatport API 同步",
+});
+</script>
+
+
+<script>
+Object.assign(I18N.en, {
+  f1_name: "Vocal AI Detect", f1_tagline: "Male/Female · Language · Mood — at a glance",
+  f1_desc: "Beyond yes/no vocals. Tells you gender, language, rapping vs singing, profanity, tenor vs alto, full acapella vs vocal chop.",
+  f1_f1: "Vocal/Instrumental ratio (0-100%)",
+  f1_f2: "Gender: Male / Female / Choir / Duet",
+  f1_f3: "Language: EN / ZH / JP / KR / ES / PT / FR",
+  f1_f4: "Type: Rap / Sung / Spoken / Chop / Full Acapella",
+  f1_f5: "Pitch range (C2-F5) + emotion detection",
+  f1_f6: "Profanity / Explicit auto-tagging",
+  f1_tech: "pyannote-audio (speaker diarization) + OpenAI Whisper-tiny (language+lyrics) + Demucs (vocal ratio) + NISQA (pitch)",
+
+  f2_name: "AI Natural Search", f2_tagline: "Filter your library in plain language",
+  f2_desc: "Say " + '"' + "find Dubai club peak-time, 127-129 BPM, female vocals, energy 8+" + '"' + " — AI returns 5 perfect matches. Smarter than Siri for DJs.",
+  f2_f1: "Natural language → SQL query auto-parse",
+  f2_f2: "Bilingual: " + '"' + "like Anyma but not melodic" + '"',
+  f2_f3: "Combined: BPM + Key + Energy + Mood + Vocals",
+  f2_f4: "History: " + '"' + "that track I dropped at Club XOXO last time" + '"',
+  f2_f5: "Similarity: " + '"' + "tracks that mix with Strobe" + '"',
+  f2_f6: "Fully offline · No data uploaded",
+  f2_tech: "Local Phi-3 mini (3.8B) or Qwen2.5-3B · 800ms CPU response · 2GB one-time download",
+
+  f3_name: "SET Sequence AI", f3_tagline: "Learn your DJ signature or your idol's",
+  f3_desc: "Import 50 of your past sets or a Tale of Us live recording — AI extracts " + '"' + "sequencing DNA" + '"' + " and generates new setlists in that style.",
+  f3_f1: "Parse your Rekordbox/Serato play history",
+  f3_f2: "BPM curve + key jump pattern extraction",
+  f3_f3: "Energy arc / drop frequency / breakdown stats",
+  f3_f4: "Idol reverse: upload recording → auto tracklist",
+  f3_f5: "Generate your " + '"' + "DJ signature" + '"' + " — shareable",
+  f3_f6: "One-click: " + '"' + "Give me 2 hours in Solomun style" + '"',
+  f3_tech: "Transformer seq2seq (tracklist gen) + shazam-style fingerprint (idol reverse) + Bayesian stats",
+
+  f4_name: "Live Rec + Cue Sheet", f4_tagline: "Record while you play · auto-timestamped setlist",
+  f4_desc: "USB to mixer records full set. AI IDs each track in/out. Exports timestamped tracklist. Upload to Mixcloud with jump-to comments.",
+  f4_f1: "Record direct from mixer master out @48kHz",
+  f4_f2: "Auto-ID every track with second-precise timestamp",
+  f4_f3: "Export cue sheet (CUE / M3U / JSON)",
+  f4_f4: "1-click upload Mixcloud/SoundCloud (with markers)",
+  f4_f5: "Email full tracklist after gig",
+  f4_f6: "24-bit lossless + multi-channel support",
+  f4_tech: "pyaudio + sounddevice (record) + Chromaprint (AcoustID fingerprint) + Mixcloud API",
+
+  f5_name: "Mashup Genie", f5_tagline: "Two tracks, one click — AI picks best combo",
+  f5_desc: "Pick 2 tracks. AI decides: A vocals+B instr? A intro+B drop? Double drop? Auto BPM+key align. 30s preview.",
+  f5_f1: "Smart combo: vocals-on-instr / intro-drop / double-drop",
+  f5_f2: "Auto BPM sync (within ±8% for audio quality)",
+  f5_f3: "Smart pitch-shift to compatible key (no tempo change)",
+  f5_f4: "30s preview · swap strategy instantly",
+  f5_f5: "Export Ableton/Rekordbox project",
+  f5_f6: "Copyright check: flag " + '"' + "live-only" + '"',
+  f5_tech: "Demucs 4-stem split + librosa.effects.time_stretch + FAISS harmonic compatibility search",
+
+  f6_name: "Crowd Reading AI", f6_tagline: "Phone listens to cheers · real-time hype score",
+  f6_desc: "Put iPad/phone on the booth. AI analyzes cheers dB + spectrum to score each track's crowd reaction. Killer feature.",
+  f6_f1: "Real-time hype score per track (0-100)",
+  f6_f2: "Detects: cheers / screams / claps / singalongs",
+  f6_f3: "On-booth big-text alert: " + '"' + "BANGER · DROP SIMILAR" + '"',
+  f6_f4: "Post-gig heatmap: what banged / what flopped",
+  f6_f5: "Venue memory: skip dead tracks next time",
+  f6_f6: "Privacy: no recording, no voiceprint storage",
+  f6_tech: "iOS/Android native Core Audio + YAMNet (ambient classification) + custom CNN (cheer regression)",
+
+  f7_name: "AI DJ Coach", f7_tagline: "Analyzes your last 10 sets · points out weaknesses",
+  f7_desc: '"You over-rely on Camelot 8A→9A (47x in 12 gigs). Peak energy drops too fast. You never used 11B-12B." — specific training advice.',
+  f7_f1: "Camelot usage heatmap + weak zone alerts",
+  f7_f2: "Transition tech stats: cut/blend/echo/loop",
+  f7_f3: "Energy curve analysis + idol comparison",
+  f7_f4: "Library utilization: hidden gems never played live",
+  f7_f5: "Daily targeted practice tasks",
+  f7_f6: "Growth curve: 6 months ago vs now",
+  f7_tech: "Time-series analysis (pandas) + clustering (sklearn) + style embedding compare (triplet loss)",
+});
+
+Object.assign(I18N.en, {
+  f8_name: "Venue DNA", f8_tagline: "Unique DNA per venue · customized recommendations",
+  f8_desc: "Log every gig: venue/time/audience/system/what banged. Next time at same venue auto-applies best strategy.",
+  f8_f1: "Venue profile: capacity / system / floor layout",
+  f8_f2: "Time slot templates: opener/warmup/peak/afterhours",
+  f8_f3: "Audience profile: age range / taste preference",
+  f8_f4: "Links with Crowd Reading: what banged here",
+  f8_f5: "Pitfall alerts: skip last time's dead tracks",
+  f8_f6: "Export venue-specific playlist template",
+  f8_tech: "SQLite relational store + collaborative filtering + time-series decomposition (STL)",
+
+  f9_name: "MIDI/OSC Live Link", f9_tagline: "Hardware controllers + visuals · seamless",
+  f9_desc: "Pioneer DDJ/CDJ/Denon Prime integration. Button triggers MixMind actions. Drops trigger Resolume flash. Auto beatsync visuals.",
+  f9_f1: "Supports Pioneer/Denon/Rane/Native Instruments",
+  f9_f2: "Custom key mapping (Learn Mode)",
+  f9_f3: "OSC to Resolume/VDMX/TouchDesigner",
+  f9_f4: "Drops trigger lights/smoke/laser",
+  f9_f5: "Ableton Link global sync clock",
+  f9_f6: "DMX light output (via OSC bridge)",
+  f9_tech: "python-rtmidi + python-osc + Ableton Link SDK + sub-beat precision alignment",
+
+  f10_name: "Pre-Gig Checklist", f10_tagline: "1-click scan your setlist · kill all risks",
+  f10_desc: "Last line of defense before you go on: key clash / loudness jumps / fake 320K / missing cues / missing files. 10s report.",
+  f10_f1: "Key Clash detection (Camelot jump >2 warn)",
+  f10_f2: "Loudness delta check (>±3 LUFS warn)",
+  f10_f3: "Fake 320K / low-quality file alert",
+  f10_f4: "Missing or misaligned cue detection",
+  f10_f5: "File path validity check",
+  f10_f6: "BPM jump warning (adjacent diff >10)",
+  f10_tech: "Rule engine + Rekordbox XML parser + filesystem stat checks",
+
+  f11_name: "Serendipity Shuffle", f11_tagline: "AI picks a track " + '"' + "you haven't played in ages" + '"',
+  f11_desc: "Break the routine, stay fresh. Not random — precise " + '"' + "happy accident" + '"' + " matching tonight's venue/crowd/energy.",
+  f11_f1: "'Hidden gems': 90+ days unplayed, scored 8+",
+  f11_f2: "Scene match: fits current venue DNA",
+  f11_f3: "Energy continuity: doesn't break curve",
+  f11_f4: "Harmonic compat: Camelot safe",
+  f11_f5: "Surprise index: 1-10 adjustable (safe→bold)",
+  f11_f6: "Learns: successful picks weighted up",
+  f11_tech: "Multi-armed bandit (UCB1) · balances exploration vs exploitation",
+
+  f12_name: "Smart Tag Cleaner", f12_tagline: "AI normalizes your messy ID3 tags",
+  f12_desc: "Thousands of tracks with inconsistent case/spelling/feat. format? AI normalizes + artwork + matches same-artist variants.",
+  f12_f1: "Normalize artist names (DJ Snake & Lil Jon = Lil Jon, DJ Snake)",
+  f12_f2: "Unify feat./ft./featuring/vs. format",
+  f12_f3: "Auto-fill artwork (Discogs + MusicBrainz)",
+  f12_f4: "Fix mis-tagged year / label",
+  f12_f5: "Smart split bilingual titles",
+  f12_f6: "Preview before batch + 1-click undo",
+  f12_tech: "MusicBrainz API + fuzzywuzzy (fuzzy match) + regex normalize + original tag backup",
+
+  f13_name: "Track Lifecycle", f13_tagline: "'Freshness' + 'peak period' tracker per track",
+  f13_desc: "Is this track getting stale? Was it huge 6 months ago but cooling now? Alerts " + '"' + "retire it" + '"' + " or " + '"' + "revive it" + '"' + ".",
+  f13_f1: "Play history: every gig + practice logged",
+  f13_f2: "Crowd score trend (from Crowd Reading)",
+  f13_f3: "'Retire' alert: 5 gigs dropping score",
+  f13_f4: "'Revive' suggest: 6+ months unplayed, was 9+",
+  f13_f5: "Peer compare: this vs same-genre others",
+  f13_f6: "Chart compare: still in Beatport Top 100?",
+  f13_tech: "Time-series analysis (Prophet) + anomaly detection (IsolationForest) + Beatport API sync",
+});
+
+// ============ 13 Features Data ============
+const FEATURES = [
+  // --- Smart Creation ---
+  { id: 'f1',  icon: '🎙️', section: 'smart', status: 'hot',  scenes: ['club','stream'],
+    colors: ['#ff2ea6','#9d00ff'] },
+  { id: 'f2',  icon: '💬', section: 'smart', status: 'hot',  scenes: ['club','festival','stream'],
+    colors: ['#00e5ff','#9d00ff'] },
+  { id: 'f3',  icon: '📊', section: 'smart', status: 'core', scenes: ['club','festival','stream'],
+    colors: ['#9d00ff','#ff2ea6'] },
+  { id: 'f5',  icon: '💎', section: 'smart', status: 'lab',  scenes: ['club','festival','stream'],
+    colors: ['#fff02e','#ff2ea6'] },
+  { id: 'f11', icon: '🎲', section: 'smart', status: 'new',  scenes: ['club','festival'],
+    colors: ['#00ff9d','#00e5ff'] },
+
+  // --- Live Performance ---
+  { id: 'f4',  icon: '🎤', section: 'live',  status: 'hot',  scenes: ['club','festival','stream'],
+    colors: ['#ff2ea6','#00e5ff'] },
+  { id: 'f6',  icon: '📣', section: 'live',  status: 'hot',  scenes: ['club','festival'],
+    colors: ['#ff0044','#ff2ea6'] },
+  { id: 'f9',  icon: '🔗', section: 'live',  status: 'lab',  scenes: ['club','festival','stream'],
+    colors: ['#00e5ff','#00ff9d'] },
+  { id: 'f10', icon: '🎯', section: 'live',  status: 'core', scenes: ['club','festival','stream'],
+    colors: ['#fff02e','#ff8c00'] },
+
+  // --- Quality & Growth ---
+  { id: 'f7',  icon: '🎓', section: 'grow',  status: 'new',  scenes: ['club','festival','stream'],
+    colors: ['#9d00ff','#00e5ff'] },
+  { id: 'f8',  icon: '🌃', section: 'grow',  status: 'core', scenes: ['club','festival'],
+    colors: ['#ff2ea6','#fff02e'] },
+  { id: 'f12', icon: '🏷️', section: 'grow',  status: 'core', scenes: ['club','festival','stream'],
+    colors: ['#00ff9d','#9d00ff'] },
+  { id: 'f13', icon: '📈', section: 'grow',  status: 'new',  scenes: ['club','festival','stream'],
+    colors: ['#00e5ff','#ff2ea6'] },
+];
+
+const SECTIONS = [
+  { id: 'smart', icon: '🧠' },
+  { id: 'live',  icon: '🎛️' },
+  { id: 'grow',  icon: '🚀' },
+];
+</script>
+
+
+<script>
+// ============ Rendering ============
+const SCENE_LABELS = {
+  zh: { club: '🎧 俱乐部', festival: '🎪 音乐节', stream: '📡 直播' },
+  en: { club: '🎧 CLUB', festival: '🎪 FESTIVAL', stream: '📡 STREAM' },
+};
+
+function featureCard(f) {
+  const t = I18N[currentLang];
+  const sceneTags = f.scenes.map(s => `<span class="scene-chip scene-${s}">${SCENE_LABELS[currentLang][s]}</span>`).join('');
+  const statusLabel = t['status_' + f.status];
+  const visible = currentScene === 'all' || f.scenes.includes(currentScene);
+  return `
+    <div class="feature-card ${visible ? '' : 'hidden-scene'} glass rounded-2xl p-5 border border-white/10"
+         data-id="${f.id}" onmousemove="cardMouseMove(event,this)" onclick="openDrawer('${f.id}')">
+      <div class="flex items-start justify-between mb-3">
+        <div class="text-5xl" style="filter: drop-shadow(0 0 12px ${f.colors[0]})">${f.icon}</div>
+        <span class="tag status-${f.status}">${statusLabel}</span>
+      </div>
+      <h3 class="font-display font-black text-lg leading-tight" style="background: linear-gradient(90deg, ${f.colors[0]}, ${f.colors[1]}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${t[f.id + '_name']}</h3>
+      <p class="text-neon-purple font-mono text-[11px] mt-1 leading-tight">${t[f.id + '_tagline']}</p>
+      <p class="text-neutral-400 text-xs mt-3 leading-relaxed line-clamp-3">${t[f.id + '_desc']}</p>
+      <div class="flex flex-wrap gap-1 mt-4">${sceneTags}</div>
+    </div>`;
+}
+
+function cardMouseMove(e, el) {
+  const r = el.getBoundingClientRect();
+  el.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+  el.style.setProperty('--my', (e.clientY - r.top) + 'px');
+}
+window.cardMouseMove = cardMouseMove;
+
+function renderSections() {
+  const t = I18N[currentLang];
+  const html = SECTIONS.map(sec => {
+    const feats = FEATURES.filter(f => f.section === sec.id);
+    const visible = feats.filter(f => currentScene === 'all' || f.scenes.includes(currentScene));
+    if (visible.length === 0 && currentScene !== 'all') return '';
+    const cards = feats.map(featureCard).join('');
+    return `
+      <section class="mb-10">
+        <div class="section-divider">
+          <span class="text-3xl">${sec.icon}</span>
+          <div>
+            <h3 class="font-display font-black text-xl tracking-widest">
+              <span class="text-neon-pink neon-text">${t['sec_' + sec.id]}</span>
+            </h3>
+            <p class="text-[11px] text-neutral-500 font-mono mt-1">${t['sec_' + sec.id + '_sub']}</p>
+          </div>
+          <div class="line"></div>
+          <span class="text-xs font-mono text-neon-purple">${visible.length} / ${feats.length}</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${cards}</div>
+      </section>`;
+  }).join('');
+  document.getElementById('sections').innerHTML = html;
+}
+
+function renderStats() {
+  const t = I18N[currentLang];
+  const total = FEATURES.length;
+  const clubN = FEATURES.filter(f => f.scenes.includes('club')).length;
+  const festN = FEATURES.filter(f => f.scenes.includes('festival')).length;
+  const streamN = FEATURES.filter(f => f.scenes.includes('stream')).length;
+  document.getElementById('stats-bar').innerHTML = `
+    <div><span class="text-neutral-500">${t.stat_total}:</span> <span class="text-neon-pink font-bold ml-1">${total}</span></div>
+    <div><span class="text-neutral-500">${t.stat_club}:</span> <span class="text-neon-pink font-bold ml-1">${clubN}</span></div>
+    <div><span class="text-neutral-500">${t.stat_festival}:</span> <span class="text-neon-blue font-bold ml-1">${festN}</span></div>
+    <div><span class="text-neutral-500">${t.stat_stream}:</span> <span class="text-neon-green font-bold ml-1">${streamN}</span></div>
+  `;
+}
+
+function renderAll() { renderSections(); renderStats(); }
+window.renderAll = renderAll;
+
+// ============ Drawer (detail popup) ============
+function openDrawer(id) {
+  const f = FEATURES.find(x => x.id === id);
+  if (!f) return;
+  const t = I18N[currentLang];
+  document.getElementById('drawer-icon').textContent = f.icon;
+  document.getElementById('drawer-icon').style.filter = `drop-shadow(0 0 16px ${f.colors[0]})`;
+  const titleEl = document.getElementById('drawer-title');
+  titleEl.textContent = t[id + '_name'];
+  titleEl.style.background = `linear-gradient(90deg, ${f.colors[0]}, ${f.colors[1]})`;
+  titleEl.style.webkitBackgroundClip = 'text';
+  titleEl.style.webkitTextFillColor = 'transparent';
+  titleEl.style.backgroundClip = 'text';
+  document.getElementById('drawer-sub').textContent = t[id + '_tagline'];
+  const features = [1,2,3,4,5,6].map(i => t[id + '_f' + i]).filter(Boolean);
+  document.getElementById('drawer-content').innerHTML = `
+    <p class="text-neutral-300 text-sm leading-relaxed mb-5">${t[id + '_desc']}</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div>
+        <div class="text-[10px] font-mono text-neon-purple uppercase tracking-widest mb-3">★ ${t.features}</div>
+        <div class="space-y-2">
+          ${features.map(ft => `<div class="flex gap-2 items-start text-xs"><span style="color: ${f.colors[0]}">▸</span><span class="text-neutral-300 leading-relaxed">${ft}</span></div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="text-[10px] font-mono text-neon-blue uppercase tracking-widest mb-3">⚙ ${t.tech}</div>
+        <div class="glass rounded-lg p-3 border border-neon-blue/20">
+          <code class="text-xs text-neon-blue leading-relaxed block" style="white-space: pre-wrap">${t[id + '_tech']}</code>
+        </div>
+        <div class="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mt-5 mb-3">◆ ${t.scenes}</div>
+        <div class="flex flex-wrap gap-2">
+          ${f.scenes.map(s => `<span class="scene-chip scene-${s}" style="padding: 6px 12px; font-size: 11px">${SCENE_LABELS[currentLang][s]}</span>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer() { document.getElementById('drawer').classList.remove('open'); }
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
+
+// Close drawer on Escape or outside click
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.getElementById('drawer').addEventListener('click', e => {
+  if (e.target.id === 'drawer') closeDrawer();
+});
+
+// ============ Scene filter tabs ============
+document.querySelectorAll('#scene-tabs .scene-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#scene-tabs .scene-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentScene = btn.dataset.scene;
+    renderAll();
+  });
+});
+
+// Init
+setLang(currentLang);
+renderAll();
+</script>
+</body>
+</html>
