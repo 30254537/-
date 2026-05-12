@@ -1,0 +1,29 @@
+# Core audio analysis
+librosa>=0.10.1
+numpy>=1.24.0
+scipy>=1.11.0
+soundfile>=0.12.1
+
+# Metadata
+mutagen>=1.47.0
+
+# Machine learning
+scikit-learn>=1.3.0
+joblib>=1.3.0
+
+# Web API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# CLI
+click>=8.1.0
+rich>=13.7.0
+tqdm>=4.66.0
+
+# Database
+# sqlite3 is in the standard library
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.5.0
