@@ -1,11 +1,16 @@
 import { create } from "zustand";
 import { api, Track, Stats } from "./api";
+import { translate, type Lang } from "./i18n";
 
-type View = "dashboard" | "library" | "recommend" | "playlist" | "dedupe";
+type View = "dashboard" | "library" | "recommend" | "playlist" | "dedupe" | "pro";
 
 interface AppState {
   view: View;
   setView: (v: View) => void;
+
+  lang: Lang;
+  setLang: (l: Lang) => void;
+  t: (key: string) => string;
 
   stats: Stats | null;
   loadStats: () => Promise<void>;
@@ -22,9 +27,26 @@ interface AppState {
   rate: (id: number, rating: number) => Promise<void>;
 }
 
+const STORAGE_KEY = "mixmind.lang";
+const initialLang: Lang =
+  (typeof localStorage !== "undefined" &&
+    (localStorage.getItem(STORAGE_KEY) as Lang)) ||
+  (typeof navigator !== "undefined" && navigator.language?.startsWith("zh")
+    ? "zh"
+    : "en");
+
 export const useApp = create<AppState>((set, get) => ({
   view: "dashboard",
   setView: (v) => set({ view: v }),
+
+  lang: initialLang,
+  setLang: (l) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, l);
+    } catch {}
+    set({ lang: l });
+  },
+  t: (key) => translate(key, get().lang),
 
   stats: null,
   loadStats: async () => {
@@ -50,7 +72,6 @@ export const useApp = create<AppState>((set, get) => ({
 
   rate: async (id, rating) => {
     await api.rateTrack(id, rating);
-    // Update in list
     set((s) => ({
       tracks: s.tracks.map((t) => (t.id === id ? { ...t, rating } : t)),
       currentTrack:

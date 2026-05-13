@@ -132,6 +132,10 @@ def init_db():
             ("breakdown", "REAL"),
             ("outro_start", "REAL"),
             ("waveform_bands", "TEXT"),
+            ("hot_cues", "TEXT"),                # JSON array of {slot,name,time_sec,color,type}
+            ("quality_verdict", "TEXT"),         # quality audit: pristine/lossy_320/fake_320/etc
+            ("quality_score", "REAL"),
+            ("spectral_cutoff_hz", "REAL"),
         ]
         for col, typ in migrations:
             if col not in existing:

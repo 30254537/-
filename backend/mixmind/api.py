@@ -22,6 +22,14 @@ from mixmind.preferences import (
 )
 from mixmind.playlist import generate_setlist, export_m3u8
 from mixmind.exporter import export_rekordbox_xml
+from mixmind.trackid import identify_track
+from mixmind.livemix import suggest_next, mark_played
+from mixmind.phrasegrid import build_phrase_grid
+from mixmind.stems import get_capabilities as stems_capabilities, separate as stems_separate
+from mixmind.gigexport import export_gig
+from mixmind.trends import get_trend_radar
+from mixmind.quality import audit_file, audit_library
+from mixmind.hotcues import generate_hot_cues, write_cues_to_db
 
 app = FastAPI(title="MixMind DJ API", version=__version__)
 
@@ -265,3 +273,178 @@ def download_export():
     if not path.exists():
         raise HTTPException(404, "No export available, run /api/export/rekordbox first")
     return FileResponse(str(path), filename="mixmind_rekordbox.xml", media_type="application/xml")
+
+
+# ============================================================================
+# Pro Modules (v0.4)
+# ============================================================================
+
+# --- Track ID --------------------------------------------------------------
+
+class TrackIdIn(BaseModel):
+    path: str
+
+
+@app.post("/api/pro/trackid/file")
+def pro_trackid_file(body: TrackIdIn):
+    """Identify a single audio file by fingerprint match against the library."""
+    if not Path(body.path).exists():
+        raise HTTPException(400, "File not found")
+    return identify_track(body.path)
+
+
+@app.post("/api/pro/trackid/library/{track_id}")
+def pro_trackid_library(track_id: int):
+    """Re-identify an existing library track (verifies metadata)."""
+    t = db.get_track(track_id)
+    if not t:
+        raise HTTPException(404)
+    return identify_track(t["path"])
+
+
+# --- Live Mix Assistant ---------------------------------------------------
+
+class LiveMixIn(BaseModel):
+    current_track_id: int
+    mode: str = "steady"            # steady / build / release
+    limit: int = 3
+
+
+@app.post("/api/pro/livemix/suggest")
+def pro_livemix_suggest(body: LiveMixIn):
+    return {"candidates": suggest_next(body.current_track_id, mode=body.mode, limit=body.limit)}
+
+
+@app.post("/api/pro/livemix/played/{track_id}")
+def pro_livemix_played(track_id: int):
+    mark_played(track_id)
+    return {"ok": True}
+
+
+# --- Phrase Grid -----------------------------------------------------------
+
+@app.get("/api/pro/phrasegrid/{track_id}")
+def pro_phrasegrid(track_id: int, bars_per_phrase: int = 32):
+    grid = build_phrase_grid(track_id, bars_per_phrase=bars_per_phrase)
+    if grid is None:
+        raise HTTPException(400, "Phrase grid unavailable. Run analyze first.")
+    return grid
+
+
+# --- AI Stems --------------------------------------------------------------
+
+@app.get("/api/pro/stems/capabilities")
+def pro_stems_capabilities():
+    return stems_capabilities()
+
+
+class StemsIn(BaseModel):
+    track_id: int
+    out_dir: Optional[str] = None
+
+
+@app.post("/api/pro/stems/separate")
+def pro_stems_separate(body: StemsIn):
+    t = db.get_track(body.track_id)
+    if not t:
+        raise HTTPException(404)
+    try:
+        return stems_separate(t["path"], out_dir=body.out_dir)
+    except RuntimeError as e:
+        raise HTTPException(400, str(e))
+
+
+# --- Gig USB Export --------------------------------------------------------
+
+class GigExportIn(BaseModel):
+    out_root: str
+    playlist_id: Optional[int] = None
+    track_ids: Optional[List[int]] = None
+    playlist_name: str = "Gig"
+    normalize_lufs: Optional[float] = -8.0
+    include_covers: bool = True
+
+
+@app.post("/api/pro/gig/export")
+def pro_gig_export(body: GigExportIn):
+    try:
+        return export_gig(
+            out_root=body.out_root,
+            track_ids=body.track_ids,
+            playlist_id=body.playlist_id,
+            playlist_name=body.playlist_name,
+            normalize_lufs=body.normalize_lufs,
+            include_covers=body.include_covers,
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+# --- Trend Radar -----------------------------------------------------------
+
+@app.get("/api/pro/trends")
+def pro_trends(genres: Optional[str] = None, refresh: bool = False):
+    """genres: comma-separated list e.g. 'Tech House,Techno'."""
+    glist = [g.strip() for g in (genres or "").split(",") if g.strip()] or None
+    return get_trend_radar(genres=glist, refresh=refresh)
+
+
+# --- Quality Audit ---------------------------------------------------------
+
+@app.get("/api/pro/quality/{track_id}")
+def pro_quality_track(track_id: int):
+    t = db.get_track(track_id)
+    if not t:
+        raise HTTPException(404)
+    report = audit_file(t["path"])
+    db.update_track(track_id, {
+        "quality_verdict": report.get("verdict"),
+        "quality_score": report.get("score"),
+        "spectral_cutoff_hz": report.get("measured_cutoff_hz"),
+    })
+    return report
+
+
+class QualityBatchIn(BaseModel):
+    track_ids: Optional[List[int]] = None
+    limit: int = 200
+
+
+@app.post("/api/pro/quality/audit")
+def pro_quality_batch(body: QualityBatchIn):
+    results = audit_library(track_ids=body.track_ids, limit=body.limit)
+    for r in results:
+        if "track_id" in r and r.get("verdict") != "error":
+            db.update_track(r["track_id"], {
+                "quality_verdict": r.get("verdict"),
+                "quality_score": r.get("score"),
+                "spectral_cutoff_hz": r.get("measured_cutoff_hz"),
+            })
+    return {"reports": results, "count": len(results)}
+
+
+# --- Auto Hot Cues ---------------------------------------------------------
+
+@app.post("/api/pro/hotcues/{track_id}")
+def pro_hotcues(track_id: int, save: bool = True):
+    payload = generate_hot_cues(track_id)
+    if "error" in payload:
+        raise HTTPException(400, payload["error"])
+    if save:
+        write_cues_to_db(track_id, payload)
+    return payload
+
+
+@app.get("/api/pro/hotcues/{track_id}")
+def pro_hotcues_get(track_id: int):
+    t = db.get_track(track_id)
+    if not t:
+        raise HTTPException(404)
+    cues = t.get("hot_cues")
+    if not cues:
+        return {"track_id": track_id, "cues": []}
+    import json as _json
+    try:
+        return {"track_id": track_id, "cues": _json.loads(cues) if isinstance(cues, str) else cues}
+    except Exception:
+        return {"track_id": track_id, "cues": []}
