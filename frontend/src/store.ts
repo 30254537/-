@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { api, Track, Stats } from "./api";
 import { translate, type Lang } from "./i18n";
 
-type View = "dashboard" | "library" | "recommend" | "playlist" | "dedupe" | "pro";
+type View = "dashboard" | "library" | "recommend" | "playlist" | "dedupe" | "pro" | "proplus";
 
 interface AppState {
   view: View;

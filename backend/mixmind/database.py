@@ -136,6 +136,13 @@ def init_db():
             ("quality_verdict", "TEXT"),         # quality audit: pristine/lossy_320/fake_320/etc
             ("quality_score", "REAL"),
             ("spectral_cutoff_hz", "REAL"),
+            # v0.5 additions
+            ("vibe_mood", "TEXT"),               # dark / euphoric / melancholic / uplifting / neutral
+            ("vibe_texture", "TEXT"),            # driving / groovy / hypnotic / ethereal / funky
+            ("vibe_time", "TEXT"),               # sunset / late_night / sunrise / daytime / anytime
+            ("vibe_element", "TEXT"),            # vocal / instrumental / acid / classic / modern
+            ("cover_path", "TEXT"),              # local jpg path (extracted/fetched)
+            ("sample_type", "TEXT"),             # acapella/drum_loop/fx_riser/etc. (None for full songs)
         ]
         for col, typ in migrations:
             if col not in existing:

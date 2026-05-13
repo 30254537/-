@@ -1,4 +1,4 @@
-import { LayoutDashboard, Music2, Sparkles, ListMusic, Copy, Wrench } from "lucide-react";
+import { LayoutDashboard, Music2, Sparkles, ListMusic, Copy, Wrench, Zap } from "lucide-react";
 import { useApp } from "../store";
 import clsx from "clsx";
 
@@ -9,6 +9,7 @@ const ITEMS = [
   { id: "playlist",  labelKey: "nav.playlist",  icon: ListMusic },
   { id: "dedupe",    labelKey: "nav.dedupe",    icon: Copy },
   { id: "pro",       labelKey: "nav.pro",       icon: Wrench },
+  { id: "proplus",   labelKey: "nav.proplus",   icon: Zap },
 ] as const;
 
 export function Sidebar() {

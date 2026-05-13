@@ -292,3 +292,112 @@ export function translate(key: string, lang: Lang): string {
 }
 
 export const ALL_KEYS = Object.keys(TRANSLATIONS);
+
+
+
+// ── v0.5 — 13 additional Pro Plus modules ─────────────────────────────────
+const V05_TRANSLATIONS: Record<string, { en: string; zh: string }> = {
+  // Nav
+  "nav.proplus":            { en: "Pro Plus",          zh: "专业增强" },
+  "proplus.title":          { en: "PRO PLUS",          zh: "专业增强" },
+  "proplus.subtitle":       { en: "13 advanced modules — autotag, mastering, set history, vibe search and more.",
+                              zh: "13 个进阶模块 · 自动归档 / 母带处理 / 历史分析 / 氛围搜索等" },
+
+  // Modules
+  "ppx.autotag.name":       { en: "Auto Organize",     zh: "智能整理" },
+  "ppx.autotag.desc":       { en: "Move new downloads into clean genre/BPM folders.",
+                              zh: "把新下载的歌按风格 + BPM 分类到干净的文件夹" },
+  "ppx.cover.name":         { en: "Cover Art",         zh: "封面补全" },
+  "ppx.cover.desc":         { en: "Auto-extract or fetch missing album art.",
+                              zh: "提取或在线抓取缺失的专辑封面" },
+  "ppx.vibe.name":          { en: "Vibe Search",       zh: "氛围搜索" },
+  "ppx.vibe.desc":          { en: "Find tracks by mood / texture / time / element.",
+                              zh: "按情绪 / 质感 / 时段 / 元素找歌" },
+  "ppx.sonic.name":         { en: "Sonic Similarity",  zh: "音色相似" },
+  "ppx.sonic.desc":         { en: "Beyond Camelot/BPM — find sonically similar tracks.",
+                              zh: "超越 Camelot / BPM · 在音色空间找相近的歌" },
+  "ppx.tracklist.name":     { en: "Set Tracklist",     zh: "Set Tracklist 还原" },
+  "ppx.tracklist.desc":     { en: "Recover tracklist from a recorded set.",
+                              zh: "从演出录音自动还原曲目清单" },
+  "ppx.history.name":       { en: "Set History",       zh: "演出档案" },
+  "ppx.history.desc":       { en: "Long-term DJ analytics — top tracks / drift.",
+                              zh: "长期 DJ 数据：最常用的歌、风格演变" },
+  "ppx.mimic.name":         { en: "Style Mimic",       zh: "风格模仿" },
+  "ppx.mimic.desc":         { en: "Generate a setlist that mimics a reference DJ.",
+                              zh: "模仿某位 DJ 的风格生成一个歌单" },
+  "ppx.b2b.name":           { en: "B2B Compatibility", zh: "B2B 协同" },
+  "ppx.b2b.desc":           { en: "Find common ground with another DJ's library.",
+                              zh: "找出两个 DJ 曲库的可衔接交集" },
+  "ppx.highlight.name":     { en: "Highlight Reel",    zh: "精华剪辑" },
+  "ppx.highlight.desc":     { en: "Auto-extract the most exciting clip from a set.",
+                              zh: "从演出录音自动剪出最炸的片段" },
+  "ppx.bpmramp.name":       { en: "BPM Ramp",          zh: "BPM 微调" },
+  "ppx.bpmramp.desc":       { en: "Plan a smooth pitch-fader ramp between tracks.",
+                              zh: "规划两首歌之间的平滑变速衔接" },
+  "ppx.samples.name":       { en: "Samples & Loops",   zh: "Sample 库" },
+  "ppx.samples.desc":       { en: "Acapella / drum loop / FX one-shot library.",
+                              zh: "纯人声 / 鼓循环 / FX 单击的独立库" },
+  "ppx.master.name":        { en: "Mastering",         zh: "母带统一" },
+  "ppx.master.desc":        { en: "Repair clipping + normalize loudness (Platinum-Notes-equivalent).",
+                              zh: "修复 clipping + 响度统一（替代 Platinum Notes）" },
+  "ppx.venue.name":         { en: "Venue Setlists",    zh: "场地预设" },
+  "ppx.venue.desc":         { en: "Setlists tuned for beach / club / festival / lounge.",
+                              zh: "海滩 / 俱乐部 / 音乐节 / 酒吧专属歌单" },
+  "ppx.style.name":         { en: "Section Stats",     zh: "段落分析" },
+  "ppx.style.desc":         { en: "Reverse-engineer a track's section structure.",
+                              zh: "逆向分析每个段落的频谱结构" },
+  "ppx.cloud.name":         { en: "Cloud Sync",        zh: "云同步" },
+  "ppx.cloud.desc":         { en: "Pack your library to share with another machine.",
+                              zh: "导出曲库为单文件 · 多设备同步" },
+  "ppx.releases.name":      { en: "New Releases",      zh: "新歌监控" },
+  "ppx.releases.desc":      { en: "Subscribe to artists/labels for new release alerts.",
+                              zh: "订阅艺人 / 厂牌 · 新歌发布提醒" },
+
+  // Common UI strings
+  "ppx.run":                { en: "RUN",                zh: "执行" },
+  "ppx.preview":            { en: "PREVIEW",            zh: "预览" },
+  "ppx.execute":            { en: "EXECUTE",            zh: "执行" },
+  "ppx.dryrun":             { en: "Dry run (preview)",  zh: "预览（不修改）" },
+  "ppx.copy":               { en: "Copy",               zh: "复制" },
+  "ppx.move":               { en: "Move",               zh: "移动" },
+  "ppx.upload":             { en: "Upload set file",    zh: "上传 set 文件" },
+  "ppx.target_lufs":        { en: "Target LUFS",        zh: "目标 LUFS" },
+  "ppx.target_count":       { en: "Target track count", zh: "目标曲数" },
+  "ppx.path":               { en: "Path",               zh: "路径" },
+  "ppx.export":             { en: "EXPORT",             zh: "导出" },
+  "ppx.import":             { en: "IMPORT",             zh: "导入" },
+
+  // Vibe values
+  "vibe.dark":              { en: "Dark",               zh: "阴暗" },
+  "vibe.euphoric":          { en: "Euphoric",           zh: "亢奋" },
+  "vibe.melancholic":       { en: "Melancholic",        zh: "忧郁" },
+  "vibe.uplifting":         { en: "Uplifting",          zh: "向上" },
+  "vibe.neutral":           { en: "Neutral",            zh: "中性" },
+  "vibe.driving":           { en: "Driving",            zh: "推进" },
+  "vibe.groovy":            { en: "Groovy",             zh: "律动" },
+  "vibe.hypnotic":          { en: "Hypnotic",           zh: "催眠" },
+  "vibe.ethereal":          { en: "Ethereal",           zh: "空灵" },
+  "vibe.funky":             { en: "Funky",              zh: "Funk" },
+  "vibe.sunset":            { en: "Sunset",             zh: "日落" },
+  "vibe.late_night":        { en: "Late Night",         zh: "深夜" },
+  "vibe.sunrise":           { en: "Sunrise",            zh: "日出" },
+  "vibe.daytime":           { en: "Daytime",            zh: "白天" },
+  "vibe.anytime":           { en: "Any time",           zh: "随时" },
+  "vibe.vocal":             { en: "Vocal",              zh: "人声" },
+  "vibe.instrumental":      { en: "Instrumental",       zh: "纯器乐" },
+  "vibe.acid":              { en: "Acid",               zh: "Acid" },
+  "vibe.classic":           { en: "Classic",            zh: "经典" },
+  "vibe.modern":            { en: "Modern",             zh: "现代" },
+
+  // Venues
+  "venue.beach":            { en: "Beach / Day",        zh: "海滩 / 白天" },
+  "venue.club_peak":        { en: "Club — Peak",        zh: "俱乐部 · 高峰" },
+  "venue.festival":         { en: "Festival",           zh: "音乐节" },
+  "venue.afterhours":       { en: "After Hours",        zh: "尾场" },
+  "venue.bar_lounge":       { en: "Bar / Lounge",       zh: "酒吧 / Lounge" },
+  "venue.warmup":           { en: "Warmup",             zh: "暖场" },
+  "venue.closing":          { en: "Closing",            zh: "压轴" },
+};
+
+// Merge into main translations table
+Object.assign(TRANSLATIONS, V05_TRANSLATIONS);

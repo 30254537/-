@@ -337,6 +337,13 @@ def seed_demo_library(count: int = 60, audio_dir: Path | None = None) -> Dict[st
             db.upsert_track(row)
             inserted += 1
 
+    # Auto-tag vibes for the seeded tracks
+    try:
+        from mixmind import vibetags
+        vibetags.tag_library()
+    except Exception:
+        pass
+
     # Auto-rate a handful as "liked" so AI recs work right away
     rated = 0
     if inserted > 0:

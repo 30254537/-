@@ -199,6 +199,170 @@ export const api = {
   genres: () => req<{ genres: string[] }>("/api/genres"),
   moods: () => req<{ moods: string[] }>("/api/moods"),
 
+  // ── Pro Plus (v0.5) ─────────────────────────────────────────────
+  pp: {
+    autotagPlan: (out_root: string, track_ids?: number[]) =>
+      req<{ plan: any[] }>("/api/pro/autotag/plan", {
+        method: "POST",
+        body: JSON.stringify({ out_root, track_ids }),
+      }),
+    autotagExecute: (
+      out_root: string,
+      mode = "copy",
+      track_ids?: number[],
+      update_paths = false,
+    ) =>
+      req<any>("/api/pro/autotag/execute", {
+        method: "POST",
+        body: JSON.stringify({ out_root, mode, track_ids, update_paths }),
+      }),
+
+    coverRun: (online = true, track_ids?: number[]) =>
+      req<{ extracted: number; fetched: number; failed: number }>(
+        "/api/pro/coverart/run",
+        { method: "POST", body: JSON.stringify({ online, track_ids }) }
+      ),
+    coverUrl: (id: number) => `/api/pro/coverart/${id}`,
+
+    vibeTag: (track_ids?: number[]) =>
+      req<any>("/api/pro/vibe/tag", { method: "POST", body: JSON.stringify({ track_ids }) }),
+    vibeFind: (params: Record<string, any>) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return req<{ tracks: Track[] }>(`/api/pro/vibe/find?${qs}`);
+    },
+
+    sonicSimilarity: (id: number, opts: Record<string, any> = {}) => {
+      const qs = new URLSearchParams(
+        Object.entries(opts).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return req<{ tracks: any[] }>(`/api/pro/similarity/${id}?${qs}`);
+    },
+
+    tracklistRecover: (set_path: string, opts: Record<string, any> = {}) =>
+      req<any>("/api/pro/tracklist/recover", {
+        method: "POST",
+        body: JSON.stringify({ set_path, ...opts }),
+      }),
+    tracklistFormat: (tracklist: any, format: string = "text") =>
+      req<{ text: string }>("/api/pro/tracklist/format", {
+        method: "POST",
+        body: JSON.stringify({ tracklist, format }),
+      }),
+
+    historyList: () => req<any>("/api/pro/sethistory"),
+    historyRecord: (name: string, tracklist: any, venue?: string, notes?: string) =>
+      req<any>("/api/pro/sethistory/record", {
+        method: "POST",
+        body: JSON.stringify({ name, tracklist, venue, notes }),
+      }),
+    historyProfile: (since_days?: number) =>
+      req<any>(`/api/pro/sethistory/profile${since_days ? `?since_days=${since_days}` : ""}`),
+    historyDrift: () => req<any>("/api/pro/sethistory/drift"),
+
+    mimicFingerprint: (tracks: any[]) =>
+      req<any>("/api/pro/mimic/fingerprint", {
+        method: "POST",
+        body: JSON.stringify({ tracks }),
+      }),
+    mimicGenerate: (fingerprint: any, target_count?: number) =>
+      req<{ tracks: Track[] }>("/api/pro/mimic/generate", {
+        method: "POST",
+        body: JSON.stringify({ fingerprint, target_count }),
+      }),
+
+    b2bCompare: (your_ids: number[], partner_meta: any[]) =>
+      req<any>("/api/pro/b2b/compare", {
+        method: "POST",
+        body: JSON.stringify({ your_ids, partner_meta }),
+      }),
+    b2bSetlist: (your_ids: number[], partner_meta: any[], duration_minutes = 60) =>
+      req<{ tracks: any[] }>("/api/pro/b2b/setlist", {
+        method: "POST",
+        body: JSON.stringify({ your_ids, partner_meta, duration_minutes }),
+      }),
+
+    highlightFind: (set_path: string, clip_seconds = 30, n_top = 1) =>
+      req<any>("/api/pro/highlight/find", {
+        method: "POST",
+        body: JSON.stringify({ set_path, clip_seconds, n_top }),
+      }),
+    highlightExport: (set_path: string, out_path: string, start_sec: number, duration_sec = 30) =>
+      req<any>("/api/pro/highlight/export", {
+        method: "POST",
+        body: JSON.stringify({ set_path, out_path, start_sec, duration_sec }),
+      }),
+
+    bpmRamp: (
+      track_a_bpm: number,
+      track_b_bpm: number,
+      a_outro_start_sec: number,
+      a_duration_sec: number,
+      bars_per_step = 8,
+    ) =>
+      req<any>("/api/pro/bpmadjust/ramp", {
+        method: "POST",
+        body: JSON.stringify({
+          track_a_bpm, track_b_bpm, a_outro_start_sec, a_duration_sec, bars_per_step,
+        }),
+      }),
+
+    samplesScan: (folder: string) =>
+      req<any>("/api/pro/samples/scan", { method: "POST", body: JSON.stringify({ folder }) }),
+    samplesFind: (params: Record<string, any>) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return req<{ samples: any[] }>(`/api/pro/samples/find?${qs}`);
+    },
+
+    masterBatch: (track_ids: number[], out_dir: string, target_lufs = -8) =>
+      req<any>("/api/pro/mastering/batch", {
+        method: "POST",
+        body: JSON.stringify({ track_ids, out_dir, target_lufs }),
+      }),
+
+    venuesList: () => req<{ venues: any[] }>("/api/pro/venues"),
+    venueSetlist: (venue_id: string, duration_minutes = 60) =>
+      req<{ tracks: Track[] }>("/api/pro/venues/setlist", {
+        method: "POST",
+        body: JSON.stringify({ venue_id, duration_minutes }),
+      }),
+
+    styleAnalysis: (track_id: number) =>
+      req<any>(`/api/pro/styleanalysis/${track_id}`),
+
+    cloudExport: (out_path: string, include_covers = true) =>
+      req<any>("/api/pro/cloud/export", {
+        method: "POST",
+        body: JSON.stringify({ out_path, include_covers }),
+      }),
+    cloudImport: (pack_path: string, merge = true) =>
+      req<any>("/api/pro/cloud/import", {
+        method: "POST",
+        body: JSON.stringify({ pack_path, merge }),
+      }),
+    cloudDiff: (pack_path: string) =>
+      req<any>("/api/pro/cloud/diff", {
+        method: "POST",
+        body: JSON.stringify({ pack_path, merge: false }),
+      }),
+
+    releasesSubscriptions: () => req<any>("/api/pro/releases/subscriptions"),
+    releasesSubscribe: (name: string, kind = "artist", source = "beatport") =>
+      req<any>("/api/pro/releases/subscribe", {
+        method: "POST",
+        body: JSON.stringify({ name, kind, source }),
+      }),
+    releasesUnsubscribe: (id: number) =>
+      req<any>(`/api/pro/releases/subscribe/${id}`, { method: "DELETE" }),
+    releasesAuto: () => req<any>("/api/pro/releases/auto", { method: "POST" }),
+    releasesCheck: () => req<any>("/api/pro/releases/check", { method: "POST" }),
+    releasesFeed: (unseen_only = true, limit = 100) =>
+      req<{ releases: any[] }>(`/api/pro/releases/feed?unseen_only=${unseen_only}&limit=${limit}`),
+  },
+
   // ── Pro modules ──────────────────────────────────────────────────
   pro: {
     trackIdFile: (path: string) =>

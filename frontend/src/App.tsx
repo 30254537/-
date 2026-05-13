@@ -8,6 +8,7 @@ import { Recommend } from "./views/Recommend";
 import { PlaylistBuilder } from "./views/PlaylistBuilder";
 import { Dedupe } from "./views/Dedupe";
 import { Pro } from "./views/Pro";
+import { ProPlus } from "./views/ProPlus";
 
 export default function App() {
   const { view, loadStats } = useApp();
@@ -26,6 +27,7 @@ export default function App() {
         {view === "playlist" && <PlaylistBuilder />}
         {view === "dedupe" && <Dedupe />}
         {view === "pro" && <Pro />}
+        {view === "proplus" && <ProPlus />}
       </div>
       <Player />
     </div>
