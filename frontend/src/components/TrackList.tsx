@@ -22,6 +22,14 @@ export function TrackList({
     return "text-neon-pink";
   };
 
+  const vocalBadge = (g?: string) => {
+    if (!g || g === "none") return { label: "—", cls: "text-neutral-600 bg-transparent border-transparent" };
+    if (g === "male")   return { label: "♂", cls: "text-neon-blue bg-neon-blue/10 border-neon-blue/40" };
+    if (g === "female") return { label: "♀", cls: "text-neon-pink bg-neon-pink/10 border-neon-pink/40" };
+    if (g === "mixed")  return { label: "♂♀", cls: "text-neon-yellow bg-neon-yellow/10 border-neon-yellow/40" };
+    return { label: "—", cls: "text-neutral-600 bg-transparent border-transparent" };
+  };
+
   return (
     <div className="glass rounded-xl overflow-hidden">
       <table className="w-full text-sm font-mono">
@@ -32,6 +40,7 @@ export function TrackList({
             <th className="p-3 text-right">{t("table.bpm")}</th>
             <th className="p-3 text-center">{t("table.key")}</th>
             <th className="p-3 text-center">{t("table.energy")}</th>
+            <th className="p-3 text-center">{t("library.gender")}</th>
             <th className="p-3 text-left">{t("table.genre")}</th>
             <th className="p-3 text-left">{t("table.mood")}</th>
             <th className="p-3 text-center w-10"></th>
@@ -90,6 +99,22 @@ export function TrackList({
                 <td className={clsx("p-3 text-center font-bold", energyColor(track.energy))}>
                   {track.energy ?? "-"}
                 </td>
+                <td className="p-3 text-center">
+                  {(() => {
+                    const b = vocalBadge(track.vocal_gender);
+                    return (
+                      <span
+                        className={clsx(
+                          "px-1.5 py-0.5 rounded text-xs border font-bold",
+                          b.cls
+                        )}
+                        title={track.vocal_gender ?? "none"}
+                      >
+                        {b.label}
+                      </span>
+                    );
+                  })()}
+                </td>
                 <td className="p-3 text-xs">{track.genre_ai ?? "-"}</td>
                 <td className="p-3 text-xs text-neon-green">
                   {track.mood_label ? t(`mood.${track.mood_label}`) : "-"}
@@ -118,7 +143,7 @@ export function TrackList({
           })}
           {tracks.length === 0 && (
             <tr>
-              <td colSpan={8} className="p-12 text-center text-neutral-500">
+              <td colSpan={9} className="p-12 text-center text-neutral-500">
                 {t("table.empty")}
               </td>
             </tr>

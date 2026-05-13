@@ -334,6 +334,11 @@ def seed_demo_library(count: int = 60, audio_dir: Path | None = None) -> Dict[st
                 "scanned_at": now,
                 "analyzed_at": now,
             }
+            # Plausible vocal-id fields per genre so the UI shows a useful
+            # distribution out of the gate (real DSP would compute these).
+            vocal_profile = _vocal_profile_for_genre(genre.name, rng)
+            row.update(vocal_profile)
+
             db.upsert_track(row)
             inserted += 1
 
@@ -370,3 +375,63 @@ def clear_demo_library() -> Dict[str, Any]:
         before = cur.fetchone()[0]
         conn.execute("DELETE FROM tracks WHERE filename LIKE 'DEMO__%'")
     return {"deleted": before}
+
+
+
+
+def _vocal_profile_for_genre(genre: str, rng: random.Random) -> Dict[str, Any]:
+    """
+    Realistic per-genre vocal distributions for demo data so the Vocal ID
+    panel shows useful results out of the gate. Real DSP would compute
+    these from audio.
+    """
+    # Distributions roughly matching what a real DJ library looks like
+    GENDER_DIST = {
+        "Tech House":        {"male": 0.30, "female": 0.40, "mixed": 0.10, "none": 0.20},
+        "Deep House":        {"male": 0.25, "female": 0.45, "mixed": 0.10, "none": 0.20},
+        "House":             {"male": 0.30, "female": 0.45, "mixed": 0.10, "none": 0.15},
+        "Progressive House": {"male": 0.20, "female": 0.30, "mixed": 0.05, "none": 0.45},
+        "Techno":            {"male": 0.10, "female": 0.10, "mixed": 0.05, "none": 0.75},
+        "Minimal Techno":    {"male": 0.05, "female": 0.05, "mixed": 0.05, "none": 0.85},
+        "Trance":            {"male": 0.20, "female": 0.50, "mixed": 0.10, "none": 0.20},
+        "Drum & Bass":       {"male": 0.30, "female": 0.30, "mixed": 0.10, "none": 0.30},
+        "Hip-Hop":           {"male": 0.70, "female": 0.20, "mixed": 0.05, "none": 0.05},
+        "Trap":              {"male": 0.65, "female": 0.20, "mixed": 0.05, "none": 0.10},
+    }
+    F0_PROFILE = {
+        "male":   (105, 145),  # typical median F0 range
+        "female": (200, 270),
+        "mixed":  (170, 200),
+        "none":   (None, None),
+    }
+    dist = GENDER_DIST.get(genre, {"male": 0.3, "female": 0.3, "mixed": 0.1, "none": 0.3})
+    r = rng.random()
+    cum = 0.0
+    gender = "none"
+    for k, p in dist.items():
+        cum += p
+        if r <= cum:
+            gender = k
+            break
+
+    if gender == "none":
+        return {
+            "vocal_presence": round(rng.uniform(0.0, 0.06), 3),
+            "vocal_gender": "none",
+            "vocal_f0_hz": None,
+            "vocal_confidence": round(rng.uniform(0.85, 0.96), 3),
+            "vocal_f0_lo": None,
+            "vocal_f0_hi": None,
+        }
+
+    lo, hi = F0_PROFILE[gender]
+    f0 = round(rng.uniform(lo, hi), 1)
+    spread = rng.uniform(15, 40)
+    return {
+        "vocal_presence": round(rng.uniform(0.20, 0.65), 3),
+        "vocal_gender": gender,
+        "vocal_f0_hz": f0,
+        "vocal_confidence": round(rng.uniform(0.70, 0.95), 3),
+        "vocal_f0_lo": round(max(60, f0 - spread), 1),
+        "vocal_f0_hi": round(f0 + spread, 1),
+    }

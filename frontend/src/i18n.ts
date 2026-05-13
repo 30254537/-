@@ -401,3 +401,45 @@ const V05_TRANSLATIONS: Record<string, { en: string; zh: string }> = {
 
 // Merge into main translations table
 Object.assign(TRANSLATIONS, V05_TRANSLATIONS);
+
+
+
+
+// ── v0.6 — Vocal identification ──────────────────────────────────────────
+const V06_TRANSLATIONS: Record<string, { en: string; zh: string }> = {
+  // Module
+  "ppx.vocal.name":         { en: "Vocal ID",            zh: "人声识别" },
+  "ppx.vocal.desc":         { en: "Detect vocal presence + gender (male/female/mixed/instrumental).",
+                              zh: "识别人声 + 男女声分类（男声 / 女声 / 男女合唱 / 纯器乐）" },
+
+  // Gender labels
+  "vocal.male":             { en: "Male",                zh: "男声" },
+  "vocal.female":           { en: "Female",              zh: "女声" },
+  "vocal.mixed":            { en: "Mixed / Duet",        zh: "男女合唱 / 对唱" },
+  "vocal.none":             { en: "Instrumental",        zh: "纯器乐 / 无人声" },
+  "vocal.any":              { en: "Any",                 zh: "任意" },
+
+  // Panel UI
+  "vocal.presence":         { en: "Vocal presence",      zh: "人声占比" },
+  "vocal.f0":               { en: "Median F0",           zh: "F0 中位数" },
+  "vocal.f0_range":         { en: "F0 range (25-75%)",   zh: "F0 范围 (25-75%)" },
+  "vocal.confidence":       { en: "Confidence",          zh: "置信度" },
+  "vocal.run_library":      { en: "ANALYZE WHOLE LIBRARY", zh: "分析整个曲库" },
+  "vocal.run_track":        { en: "RE-ANALYZE THIS TRACK", zh: "重新分析这首" },
+  "vocal.distribution":     { en: "Library distribution", zh: "曲库分布" },
+  "vocal.find_filter":      { en: "Find by gender",      zh: "按性别筛选" },
+  "vocal.processed":        { en: "Processed",           zh: "已处理" },
+  "vocal.no_track":         { en: "Pick a track to analyze.", zh: "请先选择一首曲目" },
+
+  // Library filter
+  "library.gender":         { en: "Vocal",               zh: "人声" },
+  "library.all_vocals":     { en: "Any vocal",           zh: "任意人声" },
+
+  // Sample types — refined with gender
+  "sample.acapella_male":   { en: "Acapella (Male)",     zh: "纯人声（男）" },
+  "sample.acapella_female": { en: "Acapella (Female)",   zh: "纯人声（女）" },
+  "sample.vocal_chop_male": { en: "Vocal Chop (Male)",   zh: "人声切片（男）" },
+  "sample.vocal_chop_female":{en: "Vocal Chop (Female)", zh: "人声切片（女）" },
+};
+
+Object.assign(TRANSLATIONS, V06_TRANSLATIONS);

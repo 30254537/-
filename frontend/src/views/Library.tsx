@@ -10,6 +10,7 @@ export function Library() {
   const [mood, setMood] = useState("");
   const [bpmMin, setBpmMin] = useState<string>("");
   const [bpmMax, setBpmMax] = useState<string>("");
+  const [vocalGender, setVocalGender] = useState<string>("");
 
   useEffect(() => {
     loadTracks();
@@ -17,6 +18,8 @@ export function Library() {
 
   useEffect(() => {
     const id = setTimeout(() => {
+      // The gender filter is client-side because the existing /api/tracks
+      // endpoint doesn't accept a vocal_gender param yet.
       loadTracks({
         q: q || undefined,
         genre: genre || undefined,
@@ -27,6 +30,11 @@ export function Library() {
     }, 300);
     return () => clearTimeout(id);
   }, [q, genre, mood, bpmMin, bpmMax]);
+
+  // Apply gender filter on already-loaded tracks
+  const visibleTracks = vocalGender
+    ? tracks.filter((tr) => (tr.vocal_gender ?? "none") === vocalGender)
+    : tracks;
 
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4 grid-bg">
@@ -85,10 +93,21 @@ export function Library() {
             placeholder={t("library.bpm_max")}
             className="w-24 bg-bg-1 border border-neon-purple/30 rounded px-2 py-1 font-mono text-xs"
           />
+          <select
+            value={vocalGender}
+            onChange={(e) => setVocalGender(e.target.value)}
+            className="bg-bg-1 border border-neon-purple/30 rounded px-2 py-1 font-mono text-xs"
+          >
+            <option value="">{t("library.all_vocals")}</option>
+            <option value="male">{t("vocal.male")}</option>
+            <option value="female">{t("vocal.female")}</option>
+            <option value="mixed">{t("vocal.mixed")}</option>
+            <option value="none">{t("vocal.none")}</option>
+          </select>
         </div>
       </div>
 
-      <TrackList tracks={tracks} />
+      <TrackList tracks={visibleTracks} />
     </div>
   );
 }

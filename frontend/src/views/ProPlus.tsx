@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { Loader2, Upload, Sparkles, Folder, Image, Music, Compass, Activity,
-         History, Users, Film, Gauge, Layers, Disc, MapPin, Cloud, Bell } from "lucide-react";
+         History, Users, Film, Gauge, Layers, Disc, MapPin, Cloud, Bell, Mic } from "lucide-react";
 import { useApp } from "../store";
 import { api, type Track } from "../api";
 import { PanelTrackPicker } from "../components/pro/PanelTrackPicker";
@@ -12,6 +12,7 @@ const MODULES = [
   { id: "autotag",    icon: Folder,    color: "from-neon-blue to-neon-purple" },
   { id: "cover",      icon: Image,     color: "from-neon-pink to-neon-yellow" },
   { id: "vibe",       icon: Sparkles,  color: "from-neon-purple to-neon-pink" },
+  { id: "vocal",      icon: Mic,       color: "from-neon-pink to-neon-blue" },
   { id: "sonic",      icon: Compass,   color: "from-neon-blue to-neon-green" },
   { id: "tracklist",  icon: Music,     color: "from-neon-green to-neon-blue" },
   { id: "history",    icon: History,   color: "from-neon-purple to-neon-blue" },
@@ -69,6 +70,7 @@ export function ProPlus() {
                       isActive ? "text-white" : "text-neutral-300"
                     )}>
                       {t(`ppx.${m.id === "cover" ? "cover" : m.id === "vibe" ? "vibe"
+                          : m.id === "vocal" ? "vocal"
                           : m.id === "sonic" ? "sonic" : m.id === "tracklist" ? "tracklist"
                           : m.id === "history" ? "history" : m.id === "mimic" ? "mimic"
                           : m.id === "b2b" ? "b2b" : m.id === "highlight" ? "highlight"
@@ -98,6 +100,7 @@ export function ProPlus() {
                 {active === "autotag"   && <AutoTagPanel />}
                 {active === "cover"     && <CoverPanel />}
                 {active === "vibe"      && <VibePanel />}
+                {active === "vocal"     && <VocalPanel />}
                 {active === "sonic"     && <SonicPanel />}
                 {active === "tracklist" && <TracklistPanel />}
                 {active === "history"   && <HistoryPanel />}
@@ -857,6 +860,202 @@ function ReleasesPanel() {
             {r.url && <a href={r.url} target="_blank" rel="noopener noreferrer" className="text-neon-blue hover:underline">↗</a>}
           </div>
         ))}
+      </div>
+    </>
+  );
+}
+
+
+
+
+function VocalPanel() {
+  const { t } = useApp();
+  const [track, setTrack] = useState<Track | null>(null);
+  const [trackResult, setTrackResult] = useState<any>(null);
+  const [batchResult, setBatchResult] = useState<any>(null);
+  const [filter, setFilter] = useState<{ gender: string; bpm_min: string; bpm_max: string }>(
+    { gender: "", bpm_min: "", bpm_max: "" }
+  );
+  const [results, setResults] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const analyzeAll = async () => {
+    setLoading(true);
+    try { setBatchResult(await api.pp.vocalAnalyze()); }
+    finally { setLoading(false); }
+  };
+
+  const analyzeOne = async () => {
+    if (!track) return;
+    setLoading(true);
+    try { setTrackResult(await api.pp.vocalForTrack(track.id)); }
+    finally { setLoading(false); }
+  };
+
+  const search = async () => {
+    setLoading(true);
+    try {
+      const params: Record<string, any> = {
+        gender: filter.gender || undefined,
+        bpm_min: filter.bpm_min ? Number(filter.bpm_min) : undefined,
+        bpm_max: filter.bpm_max ? Number(filter.bpm_max) : undefined,
+      };
+      const r = await api.pp.vocalFind(params);
+      setResults(r.tracks);
+    } finally { setLoading(false); }
+  };
+
+  // Color per gender bucket
+  const genderClass = (g: string) =>
+    g === "male" ? "text-neon-blue"
+    : g === "female" ? "text-neon-pink"
+    : g === "mixed" ? "text-neon-yellow"
+    : "text-neutral-500";
+
+  return (
+    <>
+      <div className="mb-4 flex items-center gap-3">
+        <span className="text-3xl">🎤</span>
+        <div>
+          <h3 className="font-display text-2xl font-bold tracking-wider text-white">
+            {t("ppx.vocal.name")}
+          </h3>
+          <p className="text-xs text-neutral-400 font-mono">{t("ppx.vocal.desc")}</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {/* Single track analyze */}
+        <div className="space-y-2">
+          <PanelTrackPicker value={track} onChange={setTrack} />
+          <Btn onClick={analyzeOne} disabled={!track || loading} primary={false} small>
+            {loading ? <Loader2 size={12} className="animate-spin" /> : <Mic size={12} />}
+            {t("vocal.run_track")}
+          </Btn>
+        </div>
+
+        {/* Single-track result */}
+        {trackResult && !trackResult.error && (
+          <div className="glass rounded-lg p-3 space-y-2 font-mono text-xs">
+            <div className="flex items-center gap-3">
+              <span className={`text-2xl font-display font-black ${genderClass(trackResult.vocal_gender)}`}>
+                {t(`vocal.${trackResult.vocal_gender}`)}
+              </span>
+              <span className="text-neutral-500">
+                {Math.round(trackResult.vocal_confidence * 100)}% conf
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div>
+                <div className="text-neon-purple text-[10px] uppercase">{t("vocal.presence")}</div>
+                <div className="text-neon-green">
+                  {(trackResult.vocal_presence * 100).toFixed(1)}%
+                </div>
+              </div>
+              {trackResult.vocal_f0_hz && (
+                <div>
+                  <div className="text-neon-purple text-[10px] uppercase">{t("vocal.f0")}</div>
+                  <div className="text-neon-blue">{trackResult.vocal_f0_hz} Hz</div>
+                </div>
+              )}
+              {trackResult.vocal_f0_lo && (
+                <div>
+                  <div className="text-neon-purple text-[10px] uppercase">{t("vocal.f0_range")}</div>
+                  <div className="text-neon-yellow">
+                    {trackResult.vocal_f0_lo}–{trackResult.vocal_f0_hi} Hz
+                  </div>
+                </div>
+              )}
+            </div>
+            {trackResult.notes?.length > 0 && (
+              <ul className="text-[10px] text-neutral-400 list-disc list-inside">
+                {trackResult.notes.map((n: string, i: number) => <li key={i}>{n}</li>)}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* Batch analysis */}
+        <div className="border-t border-white/5 pt-4">
+          <Btn onClick={analyzeAll} disabled={loading}>
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <Mic size={14} />}
+            {t("vocal.run_library")}
+          </Btn>
+          {batchResult && (
+            <div className="mt-3 glass rounded-lg p-3 font-mono text-xs">
+              <div className="text-neon-purple text-[10px] uppercase tracking-wider mb-2">
+                {t("vocal.distribution")} · {t("vocal.processed")}: {batchResult.processed}
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {(["male", "female", "mixed", "none"] as const).map((g) => (
+                  <div key={g} className="text-center">
+                    <div className={`text-2xl font-display font-black ${genderClass(g)}`}>
+                      {batchResult.distribution[g] || 0}
+                    </div>
+                    <div className="text-[10px] text-neutral-400">{t(`vocal.${g}`)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Find by gender */}
+        <div className="border-t border-white/5 pt-4 space-y-2">
+          <div className="text-xs font-mono text-neon-purple uppercase tracking-wider">
+            {t("vocal.find_filter")}
+          </div>
+          <div className="flex gap-2 flex-wrap items-center">
+            <select
+              value={filter.gender}
+              onChange={(e) => setFilter({ ...filter, gender: e.target.value })}
+              className="bg-bg-1 border border-neon-purple/30 rounded px-2 py-1 font-mono text-xs"
+            >
+              <option value="">{t("vocal.any")}</option>
+              <option value="male">{t("vocal.male")}</option>
+              <option value="female">{t("vocal.female")}</option>
+              <option value="mixed">{t("vocal.mixed")}</option>
+              <option value="none">{t("vocal.none")}</option>
+            </select>
+            <input
+              type="number"
+              value={filter.bpm_min}
+              onChange={(e) => setFilter({ ...filter, bpm_min: e.target.value })}
+              placeholder="BPM min"
+              className="w-24 bg-bg-1 border border-neon-purple/30 rounded px-2 py-1 font-mono text-xs"
+            />
+            <input
+              type="number"
+              value={filter.bpm_max}
+              onChange={(e) => setFilter({ ...filter, bpm_max: e.target.value })}
+              placeholder="BPM max"
+              className="w-24 bg-bg-1 border border-neon-purple/30 rounded px-2 py-1 font-mono text-xs"
+            />
+            <Btn onClick={search} disabled={loading} small>
+              <Mic size={12} />
+              Search
+            </Btn>
+          </div>
+          {results.length > 0 && (
+            <div className="glass rounded-lg overflow-hidden max-h-96 overflow-y-auto">
+              {results.map((tr) => (
+                <div key={tr.id} className="px-3 py-2 border-b border-white/5 flex items-center gap-3 text-xs font-mono">
+                  <span className={`w-16 ${genderClass(tr.vocal_gender || "none")}`}>
+                    {t(`vocal.${tr.vocal_gender || "none"}`)}
+                  </span>
+                  <span className="text-neutral-500 w-16">
+                    {tr.vocal_f0_hz ? `${tr.vocal_f0_hz} Hz` : "-"}
+                  </span>
+                  <span className="text-neon-blue w-12">{tr.bpm} BPM</span>
+                  <span className="text-neon-purple w-10">{tr.camelot}</span>
+                  <span className="text-neutral-300 truncate">
+                    {tr.artist} - {tr.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

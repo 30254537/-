@@ -36,6 +36,9 @@ from mixmind import autotag, coverart, vibetags, similarity, settracks
 from mixmind import sethistory, djmimic, b2b, highlight, bpmadjust
 from mixmind import samples, mastering, venues, styleanalysis, cloudsync, newrelease
 
+# v0.6 — vocal identification
+from mixmind import vocalid
+
 app = FastAPI(title="MixMind DJ API", version=__version__)
 
 app.add_middleware(
@@ -153,6 +156,16 @@ def _run_scan(job_id: str, folder: str, do_analyze: bool):
                     if "error" not in result:
                         merged = {**track, **result}
                         result["genre_ai"] = classify_track(merged)
+                        # Vocal ID — auto-tag gender during initial analysis
+                        try:
+                            vocal = vocalid.analyze_vocal(track["path"])
+                            if "error" not in vocal:
+                                for k in ("vocal_presence", "vocal_gender", "vocal_f0_hz",
+                                          "vocal_confidence", "vocal_f0_lo", "vocal_f0_hi"):
+                                    if k in vocal:
+                                        result[k] = vocal[k]
+                        except Exception:
+                            pass
                         db.update_track(track["id"], result)
                 except Exception:
                     pass
@@ -823,3 +836,50 @@ def pro_release_check():
 @app.get("/api/pro/releases/feed")
 def pro_release_feed(unseen_only: bool = True, limit: int = 100):
     return {"releases": newrelease.feed(unseen_only, limit)}
+
+
+
+
+# ============================================================================
+# v0.6 — Vocal identification
+# ============================================================================
+
+
+class VocalAnalyzeIn(BaseModel):
+    track_ids: Optional[List[int]] = None
+    refine_sample_type: bool = True
+
+
+@app.post("/api/pro/vocal/analyze")
+def pro_vocal_analyze(body: VocalAnalyzeIn):
+    """Run vocal-presence + gender ID across the library."""
+    return vocalid.analyze_library(body.track_ids, body.refine_sample_type)
+
+
+@app.get("/api/pro/vocal/track/{track_id}")
+def pro_vocal_for_track(track_id: int):
+    """Re-analyze a single track without writing to DB."""
+    t = db.get_track(track_id)
+    if not t:
+        raise HTTPException(404)
+    return vocalid.analyze_vocal(t["path"])
+
+
+@app.get("/api/pro/vocal/find")
+def pro_vocal_find(
+    gender: Optional[str] = None,
+    bpm_min: Optional[float] = None,
+    bpm_max: Optional[float] = None,
+    camelot: Optional[str] = None,
+    sample_type: Optional[str] = None,
+    min_presence: float = 0.10,
+    limit: int = 100,
+):
+    """Find vocal-male / vocal-female / mixed / instrumental tracks."""
+    return {
+        "tracks": vocalid.find_vocals(
+            gender=gender, bpm_min=bpm_min, bpm_max=bpm_max,
+            camelot=camelot, sample_type=sample_type,
+            min_presence=min_presence, limit=limit,
+        )
+    }

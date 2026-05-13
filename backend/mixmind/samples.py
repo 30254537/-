@@ -80,17 +80,49 @@ def _ensure_schema():
                 pass
 
 
-def scan_sample_folder(folder: str) -> Dict[str, Any]:
-    """Scan a sample folder, classify each file, and add to library."""
+def scan_sample_folder(folder: str, run_vocal_id: bool = True) -> Dict[str, Any]:
+    """Scan a sample folder, classify each file, and add to library.
+
+    If `run_vocal_id` is True, every file also goes through vocalid.analyze_vocal
+    so vocal samples get refined into 'acapella_male' / 'vocal_chop_female' / etc.
+    """
     _ensure_schema()
     files = list(iter_audio_files(folder))
     added = 0
     by_type: Dict[str, int] = {}
+
+    # Lazy import — vocalid needs librosa; we tolerate its absence in pure-stdlib envs.
+    vocal_fn = None
+    if run_vocal_id:
+        try:
+            from mixmind.vocalid import analyze_vocal, refined_sample_type
+            vocal_fn = (analyze_vocal, refined_sample_type)
+        except Exception:
+            vocal_fn = None
+
     for fp in files:
         try:
             tags = extract_tags(fp)
             stype = _classify_filename(fp.name)
             tags["sample_type"] = stype
+
+            # Vocal ID for vocal-class samples
+            if vocal_fn and stype in ("acapella", "vocal_chop"):
+                try:
+                    vr = vocal_fn[0](str(fp), max_seconds=30.0, use_stems=False)
+                    if "error" not in vr:
+                        for k in ("vocal_presence", "vocal_gender", "vocal_f0_hz",
+                                  "vocal_confidence", "vocal_f0_lo", "vocal_f0_hi"):
+                            if k in vr:
+                                tags[k] = vr[k]
+                        # Refine sample type with detected gender
+                        gender = vr.get("vocal_gender") or "none"
+                        if gender in ("male", "female"):
+                            tags["sample_type"] = vocal_fn[1](stype, gender)
+                            stype = tags["sample_type"]
+                except Exception:
+                    pass
+
             db.upsert_track(tags)
             added += 1
             by_type[stype] = by_type.get(stype, 0) + 1

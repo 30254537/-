@@ -34,6 +34,15 @@ export interface Track {
   quality_verdict?: string;
   quality_score?: number;
   spectral_cutoff_hz?: number;
+
+  // v0.6 — vocal identification
+  vocal_presence?: number;
+  vocal_gender?: "male" | "female" | "mixed" | "none";
+  vocal_f0_hz?: number;
+  vocal_confidence?: number;
+  vocal_f0_lo?: number;
+  vocal_f0_hi?: number;
+  sample_type?: string;
 }
 
 export interface Stats {
@@ -361,6 +370,23 @@ export const api = {
     releasesCheck: () => req<any>("/api/pro/releases/check", { method: "POST" }),
     releasesFeed: (unseen_only = true, limit = 100) =>
       req<{ releases: any[] }>(`/api/pro/releases/feed?unseen_only=${unseen_only}&limit=${limit}`),
+
+    // ── v0.6 Vocal ID ─────────────────────────────────────────────
+    vocalAnalyze: (track_ids?: number[], refine_sample_type = true) =>
+      req<{ processed: number; distribution: Record<string, number>; reports: any[] }>(
+        "/api/pro/vocal/analyze",
+        {
+          method: "POST",
+          body: JSON.stringify({ track_ids, refine_sample_type }),
+        },
+      ),
+    vocalForTrack: (id: number) => req<any>(`/api/pro/vocal/track/${id}`),
+    vocalFind: (params: Record<string, any>) => {
+      const qs = new URLSearchParams(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      ).toString();
+      return req<{ tracks: Track[] }>(`/api/pro/vocal/find?${qs}`);
+    },
   },
 
   // ── Pro modules ──────────────────────────────────────────────────
