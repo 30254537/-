@@ -106,6 +106,22 @@ def _track_xml(track: Dict[str, Any], track_id: int) -> str:
     if track.get("outro_start"):
         cue_points.append(_cue(3, "Outro", float(track["outro_start"])))
 
+    # If pro 8-slot hot cues exist, replace structural cues with them
+    hot = track.get("hot_cues")
+    if hot:
+        try:
+            hot_list = json.loads(hot) if isinstance(hot, str) else hot
+            if hot_list:
+                cue_points = []
+                for c in hot_list[:8]:
+                    cue_points.append(
+                        f'<POSITION_MARK Name="{escape(c.get("name") or "Cue")}" '
+                        f'Type="0" Start="{float(c.get("time_sec", 0)):.3f}" '
+                        f'Num="{int(c.get("slot", 0))}"/>'
+                    )
+        except Exception:
+            pass
+
     # TEMPO (beatgrid)
     tempo_xml = ""
     bpm = track.get("bpm")

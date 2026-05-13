@@ -464,3 +464,144 @@ def export_rekordbox(out, liked_only, with_playlists):
 
 if __name__ == "__main__":
     cli()
+
+
+
+# ============================================================================
+# Demo / health utilities — make `I want to test it` painless
+# ============================================================================
+
+@cli.command()
+@click.option("--count", default=60, type=int, help="Number of demo tracks to generate.")
+@click.option("--clear", is_flag=True, help="Remove existing demo tracks first.")
+def demo(count, clear):
+    """Seed the library with synthetic but realistic demo tracks for testing."""
+    _banner()
+    from mixmind.demo import seed_demo_library, clear_demo_library
+
+    if clear:
+        r = clear_demo_library()
+        console.print(f"[yellow]Removed {r['deleted']} previous demo tracks[/yellow]")
+
+    console.print(f"[cyan]Seeding[/cyan] [bold]{count}[/bold] demo tracks...")
+    summary = seed_demo_library(count=count)
+
+    console.print(f"\n[green]✓ Inserted:[/green] {summary['inserted']}")
+    if summary["skipped_existing"]:
+        console.print(f"[yellow]Skipped (already present):[/yellow] {summary['skipped_existing']}")
+    console.print(f"[green]Auto-liked sample:[/green] {summary['auto_liked']}")
+    console.print(f"[dim]Audio stubs in:[/dim] {summary['audio_dir']}")
+    console.print(f"[bold]Total tracks in library: {summary['total_in_library']}[/bold]")
+    console.print("\n[cyan]Next:[/cyan]")
+    console.print("  [white]uvicorn mixmind.api:app --reload[/white]")
+    console.print("  [white]cd ../frontend && npm run dev[/white]")
+    console.print("  [white]Open http://localhost:5173 → Pro Tools[/white]")
+
+
+@cli.command()
+def health():
+    """Run a health check of the install — DB, modules, optional features."""
+    _banner()
+
+    issues = []
+    ok_items = []
+
+    # 1. Database
+    try:
+        db.init_db()
+        stats = db.get_stats()
+        ok_items.append(f"Database OK — {stats['total_tracks']} tracks, {stats['analyzed']} analyzed")
+    except Exception as e:
+        issues.append(f"Database FAIL: {e}")
+
+    # 2. Core analysis stack
+    try:
+        import librosa  # noqa: F401
+        import numpy    # noqa: F401
+        import scipy    # noqa: F401
+        ok_items.append(f"librosa {librosa.__version__} OK")
+    except ImportError as e:
+        issues.append(f"librosa import FAIL: {e}  (pip install -r requirements.txt)")
+
+    try:
+        import mutagen  # noqa: F401
+        ok_items.append(f"mutagen {mutagen.version_string} OK")
+    except ImportError as e:
+        issues.append(f"mutagen import FAIL: {e}")
+    except AttributeError:
+        ok_items.append("mutagen OK")
+
+    try:
+        import sklearn  # noqa: F401
+        ok_items.append(f"scikit-learn {sklearn.__version__} OK")
+    except ImportError as e:
+        issues.append(f"scikit-learn import FAIL: {e}")
+
+    try:
+        import fastapi  # noqa: F401
+        ok_items.append(f"fastapi {fastapi.__version__} OK")
+    except ImportError as e:
+        issues.append(f"fastapi import FAIL: {e}")
+
+    # 3. Pro modules
+    pro_modules = ["trackid", "livemix", "phrasegrid", "hotcues",
+                   "quality", "trends", "stems", "gigexport"]
+    for m in pro_modules:
+        try:
+            __import__(f"mixmind.{m}")
+            ok_items.append(f"Pro: mixmind.{m} OK")
+        except Exception as e:
+            issues.append(f"Pro: mixmind.{m} FAIL: {e}")
+
+    # 4. Optional features
+    optional = []
+    try:
+        import demucs.pretrained  # noqa
+        optional.append("Demucs (AI Stems): installed")
+    except ImportError:
+        optional.append("Demucs (AI Stems): NOT installed — pip install demucs")
+
+    try:
+        import spleeter  # noqa
+        optional.append("Spleeter (AI Stems backup): installed")
+    except ImportError:
+        optional.append("Spleeter: not installed (Demucs preferred anyway)")
+
+    try:
+        import requests  # noqa
+        optional.append("requests (Trend Radar / Discogs): installed")
+    except ImportError:
+        optional.append("requests: NOT installed — pip install requests")
+
+    import os
+    if os.environ.get("ACOUSTID_API_KEY"):
+        optional.append("ACOUSTID_API_KEY: set (online TrackID enabled)")
+    else:
+        optional.append("ACOUSTID_API_KEY: not set (offline TrackID still works)")
+
+    if os.environ.get("DISCOGS_TOKEN"):
+        optional.append("DISCOGS_TOKEN: set (Discogs validation enabled)")
+    else:
+        optional.append("DISCOGS_TOKEN: not set (skipping Discogs)")
+
+    # Print
+    console.print("\n[bold green]✓ Required components[/bold green]")
+    for o in ok_items:
+        console.print(f"  [green]✓[/green] {o}")
+
+    if issues:
+        console.print("\n[bold red]✗ Problems[/bold red]")
+        for i in issues:
+            console.print(f"  [red]✗[/red] {i}")
+
+    console.print("\n[bold cyan]Optional features[/bold cyan]")
+    for o in optional:
+        marker = "[green]✓[/green]" if "installed" in o or "set" in o else "[yellow]·[/yellow]"
+        console.print(f"  {marker} {o}")
+
+    console.print("")
+    if issues:
+        console.print(f"[bold red]Health: {len(issues)} issue(s) — fix above before running.[/bold red]")
+        sys.exit(1)
+    else:
+        console.print("[bold green]Health: ALL GREEN — ready to mix.[/bold green]")

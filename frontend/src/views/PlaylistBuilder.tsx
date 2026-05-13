@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { Wand2, Download, Save } from "lucide-react";
+import { Wand2, Download } from "lucide-react";
 import { api, type Track } from "../api";
 import { TrackList } from "../components/TrackList";
+import { useApp } from "../store";
 
 const CURVES = [
-  { id: "warmup", label: "Warmup", desc: "Ease in — low to mid energy (3 → 6)" },
-  { id: "peak-time", label: "Peak Time", desc: "Classic arc, big energy at center" },
-  { id: "after-hours", label: "After Hours", desc: "Wind-down — high to low (5 → 2)" },
-  { id: "festival", label: "Festival", desc: "Relentless ramp to full energy" },
-  { id: "journey", label: "DJ Journey", desc: "3-act — warmup, peak, cooldown" },
+  { id: "warmup",     labelKey: "pl.curve.warmup",     descKey: "pl.curve.warmup_desc" },
+  { id: "peak-time",  labelKey: "pl.curve.peak",       descKey: "pl.curve.peak_desc" },
+  { id: "after-hours",labelKey: "pl.curve.after",      descKey: "pl.curve.after_desc" },
+  { id: "festival",   labelKey: "pl.curve.festival",   descKey: "pl.curve.festival_desc" },
+  { id: "journey",    labelKey: "pl.curve.journey",    descKey: "pl.curve.journey_desc" },
 ];
 
 export function PlaylistBuilder() {
+  const { t } = useApp();
   const [duration, setDuration] = useState(60);
   const [curve, setCurve] = useState("journey");
   const [genre, setGenre] = useState("");
@@ -40,9 +42,9 @@ export function PlaylistBuilder() {
 
   const exportM3u = () => {
     const lines = ["#EXTM3U"];
-    tracks.forEach((t) => {
-      lines.push(`#EXTINF:${Math.round(t.duration ?? 0)},${t.artist ?? ""} - ${t.title ?? ""}`);
-      lines.push(t.path);
+    tracks.forEach((tr) => {
+      lines.push(`#EXTINF:${Math.round(tr.duration ?? 0)},${tr.artist ?? ""} - ${tr.title ?? ""}`);
+      lines.push(tr.path);
     });
     const blob = new Blob([lines.join("\n")], { type: "audio/x-mpegurl" });
     const url = URL.createObjectURL(blob);
@@ -56,8 +58,8 @@ export function PlaylistBuilder() {
   return (
     <div className="flex-1 overflow-y-auto p-6 space-y-4 grid-bg">
       <h2 className="font-display text-3xl font-bold tracking-wider">
-        <span className="text-neon-purple neon-text">PLAYLIST</span>{" "}
-        <span className="text-neon-pink neon-text">BUILDER</span>
+        <span className="text-neon-purple neon-text">{t("pl.title")}</span>{" "}
+        <span className="text-neon-pink neon-text">{t("pl.title2")}</span>
       </h2>
 
       <div className="glass rounded-xl p-6 space-y-4 neon-border">
@@ -72,14 +74,14 @@ export function PlaylistBuilder() {
                   : "border-white/10 text-neutral-400 hover:border-neon-purple/50"
               }`}
             >
-              <div className="font-display font-bold text-sm">{c.label}</div>
-              <div className="text-[10px] font-mono mt-1 opacity-70">{c.desc}</div>
+              <div className="font-display font-bold text-sm">{t(c.labelKey)}</div>
+              <div className="text-[10px] font-mono mt-1 opacity-70">{t(c.descKey)}</div>
             </button>
           ))}
         </div>
 
         <div className="grid grid-cols-6 gap-3 items-end">
-          <Field label="Duration (min)">
+          <Field label={t("pl.duration")}>
             <input
               type="number"
               value={duration}
@@ -87,19 +89,19 @@ export function PlaylistBuilder() {
               className="bg-bg-1 border border-neon-purple/30 rounded px-3 py-2 font-mono text-sm w-full"
             />
           </Field>
-          <Field label="Genre">
+          <Field label={t("pl.genre")}>
             <select
               value={genre}
               onChange={(e) => setGenre(e.target.value)}
               className="bg-bg-1 border border-neon-purple/30 rounded px-3 py-2 font-mono text-sm w-full"
             >
-              <option value="">Any</option>
+              <option value="">{t("pl.any")}</option>
               {["House", "Tech House", "Deep House", "Techno", "Trance", "Drum & Bass", "Dubstep", "Hip-Hop"].map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>
           </Field>
-          <Field label="BPM min">
+          <Field label={t("pl.bpm_min")}>
             <input
               type="number"
               value={bpmMin}
@@ -107,7 +109,7 @@ export function PlaylistBuilder() {
               className="bg-bg-1 border border-neon-purple/30 rounded px-3 py-2 font-mono text-sm w-full"
             />
           </Field>
-          <Field label="BPM max">
+          <Field label={t("pl.bpm_max")}>
             <input
               type="number"
               value={bpmMax}
@@ -115,11 +117,11 @@ export function PlaylistBuilder() {
               className="bg-bg-1 border border-neon-purple/30 rounded px-3 py-2 font-mono text-sm w-full"
             />
           </Field>
-          <Field label="Save as">
+          <Field label={t("pl.save_as")}>
             <input
               value={saveAs}
               onChange={(e) => setSaveAs(e.target.value)}
-              placeholder="Club Night — Fri"
+              placeholder={t("pl.save_placeholder")}
               className="bg-bg-1 border border-neon-purple/30 rounded px-3 py-2 font-mono text-sm w-full"
             />
           </Field>
@@ -129,7 +131,7 @@ export function PlaylistBuilder() {
             className="px-4 py-2 rounded-lg bg-gradient-to-r from-neon-pink to-neon-purple text-white font-display font-bold tracking-wider flex items-center justify-center gap-2 hover:shadow-[0_0_20px_rgba(255,46,166,0.5)] transition disabled:opacity-40"
           >
             <Wand2 size={16} className={loading ? "animate-spin" : ""} />
-            GENERATE
+            {t("pl.generate")}
           </button>
         </div>
       </div>
@@ -138,8 +140,8 @@ export function PlaylistBuilder() {
         <>
           <div className="flex items-center justify-between">
             <p className="font-mono text-sm text-neutral-400">
-              {tracks.length} tracks —{" "}
-              {Math.round(tracks.reduce((s, t) => s + (t.duration ?? 0), 0) / 60)} min
+              {tracks.length} {t("pl.tracks_count")} —{" "}
+              {Math.round(tracks.reduce((s, tr) => s + (tr.duration ?? 0), 0) / 60)}{" "}{t("pl.minutes")}
             </p>
             <div className="flex gap-2">
               <button
@@ -147,7 +149,7 @@ export function PlaylistBuilder() {
                 className="px-3 py-1.5 rounded bg-neon-blue/20 border border-neon-blue/40 text-neon-blue font-mono text-xs flex items-center gap-2"
               >
                 <Download size={14} />
-                EXPORT .M3U8
+                {t("pl.export")}
               </button>
             </div>
           </div>

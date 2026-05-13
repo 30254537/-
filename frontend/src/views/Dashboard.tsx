@@ -5,7 +5,7 @@ import { Scene3D } from "../components/Scene3D";
 import { api } from "../api";
 
 export function Dashboard() {
-  const { stats, loadStats, currentTrack } = useApp();
+  const { stats, loadStats, currentTrack, t } = useApp();
   const [scanFolder, setScanFolder] = useState("");
   const [scanJob, setScanJob] = useState<{ id: string; status: string; done: number; total: number } | null>(null);
 
@@ -15,7 +15,7 @@ export function Dashboard() {
 
   useEffect(() => {
     if (!scanJob || scanJob.status === "done" || scanJob.status === "error") return;
-    const t = setInterval(async () => {
+    const id = setInterval(async () => {
       try {
         const s = await api.jobStatus(scanJob.id);
         setScanJob({ ...scanJob, ...s });
@@ -24,7 +24,7 @@ export function Dashboard() {
         console.error(e);
       }
     }, 1000);
-    return () => clearInterval(t);
+    return () => clearInterval(id);
   }, [scanJob?.status, scanJob?.id]);
 
   const startScan = async () => {
@@ -39,7 +39,6 @@ export function Dashboard() {
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      {/* Full-screen 3D background */}
       <div className="absolute inset-0">
         <Scene3D
           energy={currentTrack?.energy ?? 5}
@@ -52,46 +51,46 @@ export function Dashboard() {
         <div className="max-w-6xl mx-auto space-y-6">
           <div>
             <h2 className="font-display text-5xl font-black tracking-wider">
-              <span className="text-neon-pink neon-text">WELCOME</span>{" "}
-              <span className="text-neon-blue neon-text">DJ</span>
+              <span className="text-neon-pink neon-text">{t("dashboard.welcome")}</span>{" "}
+              <span className="text-neon-blue neon-text">{t("dashboard.dj")}</span>
             </h2>
             <p className="text-neutral-400 font-mono text-sm mt-2">
-              Professional-grade audio analysis. Camelot key detection. Real-time AI taste learning.
+              {t("dashboard.tagline")}
             </p>
           </div>
 
           <div className="grid grid-cols-4 gap-4">
-            <StatCard icon={Music2} label="Tracks" value={stats?.total_tracks ?? 0} color="blue" />
-            <StatCard icon={Clock} label="Hours" value={`${stats?.total_hours ?? 0}h`} color="purple" />
-            <StatCard icon={Heart} label="Liked" value={stats?.liked ?? 0} color="pink" />
-            <StatCard icon={Sparkles} label="Analyzed" value={stats?.analyzed ?? 0} color="green" />
+            <StatCard icon={Music2} label={t("dashboard.stat.tracks")} value={stats?.total_tracks ?? 0} color="blue" />
+            <StatCard icon={Clock} label={t("dashboard.stat.hours")} value={`${stats?.total_hours ?? 0}h`} color="purple" />
+            <StatCard icon={Heart} label={t("dashboard.stat.liked")} value={stats?.liked ?? 0} color="pink" />
+            <StatCard icon={Sparkles} label={t("dashboard.stat.analyzed")} value={stats?.analyzed ?? 0} color="green" />
           </div>
 
           <div className="glass rounded-xl p-6 space-y-3 neon-border">
             <div className="flex items-center gap-2 mb-2">
               <FolderSearch className="text-neon-pink" size={20} />
-              <h3 className="font-display font-bold text-lg tracking-wider">SCAN MUSIC LIBRARY</h3>
+              <h3 className="font-display font-bold text-lg tracking-wider">{t("dashboard.scan_title")}</h3>
             </div>
             <div className="flex gap-2">
               <input
                 value={scanFolder}
                 onChange={(e) => setScanFolder(e.target.value)}
-                placeholder="D:\Music\NewDownloads"
+                placeholder={t("dashboard.placeholder")}
                 className="flex-1 bg-bg-1 border border-neon-purple/30 rounded-lg px-4 py-2 font-mono text-sm focus:border-neon-pink focus:outline-none focus:shadow-[0_0_20px_rgba(255,46,166,0.3)]"
               />
               <button
                 onClick={startScan}
-                disabled={!scanFolder || (scanJob && scanJob.status !== "done" && scanJob.status !== "error")}
+                disabled={!scanFolder || (scanJob !== null && scanJob.status !== "done" && scanJob.status !== "error")}
                 className="px-6 py-2 rounded-lg bg-gradient-to-r from-neon-pink to-neon-purple text-white font-bold tracking-wider text-sm disabled:opacity-40 hover:shadow-[0_0_20px_rgba(255,46,166,0.5)] transition"
               >
-                SCAN
+                {t("dashboard.scan_btn")}
               </button>
             </div>
             {scanJob && (
               <div className="space-y-1 font-mono text-xs">
                 <div className="flex justify-between">
                   <span className="text-neon-blue">
-                    {scanJob.status === "done" ? "✓ DONE" : scanJob.status.toUpperCase()}
+                    {scanJob.status === "done" ? t("dashboard.scan.done") : scanJob.status.toUpperCase()}
                     {scanJob.status !== "done" && (
                       <Loader2 size={10} className="inline ml-2 animate-spin" />
                     )}
@@ -115,7 +114,7 @@ export function Dashboard() {
           {stats?.genres && stats.genres.length > 0 && (
             <div className="glass rounded-xl p-6">
               <h3 className="font-display font-bold text-lg tracking-wider mb-4 text-neon-blue">
-                GENRE BREAKDOWN
+                {t("dashboard.genres")}
               </h3>
               <div className="space-y-2">
                 {stats.genres.slice(0, 8).map((g) => {

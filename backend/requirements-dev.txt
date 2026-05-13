@@ -1,0 +1,6 @@
+# Dev / test deps — installed on top of requirements.txt
+-r requirements.txt
+
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+httpx>=0.25.0          # required by FastAPI TestClient

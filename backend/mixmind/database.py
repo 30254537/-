@@ -132,6 +132,24 @@ def init_db():
             ("breakdown", "REAL"),
             ("outro_start", "REAL"),
             ("waveform_bands", "TEXT"),
+            ("hot_cues", "TEXT"),                # JSON array of {slot,name,time_sec,color,type}
+            ("quality_verdict", "TEXT"),         # quality audit: pristine/lossy_320/fake_320/etc
+            ("quality_score", "REAL"),
+            ("spectral_cutoff_hz", "REAL"),
+            # v0.5 additions
+            ("vibe_mood", "TEXT"),               # dark / euphoric / melancholic / uplifting / neutral
+            ("vibe_texture", "TEXT"),            # driving / groovy / hypnotic / ethereal / funky
+            ("vibe_time", "TEXT"),               # sunset / late_night / sunrise / daytime / anytime
+            ("vibe_element", "TEXT"),            # vocal / instrumental / acid / classic / modern
+            ("cover_path", "TEXT"),              # local jpg path (extracted/fetched)
+            ("sample_type", "TEXT"),             # acapella/drum_loop/fx_riser/etc. (None for full songs)
+            # v0.6 — vocal identification
+            ("vocal_presence", "REAL"),          # 0..1, fraction of frames with detected vocal
+            ("vocal_gender", "TEXT"),            # male / female / mixed / none
+            ("vocal_f0_hz", "REAL"),             # median fundamental in vocal frames
+            ("vocal_confidence", "REAL"),        # 0..1
+            ("vocal_f0_lo", "REAL"),             # 25th percentile pitch
+            ("vocal_f0_hi", "REAL"),             # 75th percentile pitch
         ]
         for col, typ in migrations:
             if col not in existing:

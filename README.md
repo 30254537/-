@@ -149,8 +149,16 @@ mixmind-dj/
 - [x] **v0.1** - CLI 工具：扫描 / 分析 / 去重 / 归类
 - [x] **v0.2** - AI 喜好学习 + 智能排歌
 - [x] **v0.3** - 3D Web UI
-- [ ] **v0.4** - Rekordbox XML / Serato crates 导出
-- [ ] **v0.5** - Electron 打包成 Windows 桌面应用
+- [x] **v0.4** - 8 个 Pro 模块 + 完整中英双语
+  - 🎯 Track ID Studio（音频指纹本地匹配 + AcoustID + Discogs）
+  - 🎚️ Live Mix Assistant（实时下一首推荐 + 混入点）
+  - 📐 Phrase Grid（32 小节结构带 + 自动混入/混出点）
+  - 🔥 Auto Hot Cues（8 个专业级热 Cue，写入 Rekordbox XML）
+  - 🎵 Quality Audit（频谱分析揪出冒牌 320 kbps）
+  - 📡 Trend Radar（Beatport 等榜单 vs 你的曲库）
+  - 💎 AI Stems（Demucs/Spleeter 4 轨分离）
+  - 📦 Gig USB Export（一键打包 + EBU R128 -8 LUFS 归一化）
+- [ ] **v0.5** - Electron 打包成 Windows / macOS 桌面应用
 - [ ] **v1.0** - 深度学习风格识别（替换启发式分类器）
 
 ---
@@ -170,6 +178,23 @@ A local, privacy-first AI music manager built for DJs. Scan your music library, 
 - 🔁 Smart duplicate detection (Original/Extended/Remix aware)
 - 🎚️ Auto-playlist generation with energy curves + harmonic mixing
 - 🎨 Cool cyberpunk 3D Web UI
+
+### Pro Tools (v0.4)
+
+8 working-DJ modules accessible via the **Pro Tools** view:
+
+| Module | What it does |
+|--------|--------------|
+| 🎯 Track ID Studio | Identify unknown tracks via audio-fingerprint match + AcoustID + Discogs |
+| 🎚️ Live Mix Assistant | Real-time next-track suggestions with mix-in points and 5-tag reasons |
+| 📐 Phrase Grid | 32-bar structural ribbon with mix-in / mix-out points |
+| 🔥 Auto Hot Cues | 8 pro Hot Cues (Intro / Build / Drop / Breakdown / etc.) → Rekordbox XML |
+| 🎵 Quality Audit | Spectral analysis to detect fake 320 kbps files |
+| 📡 Trend Radar | Cross-check your library against Beatport / RA / TikTok charts |
+| 💎 AI Stems | 4-stem separation (vocals/drums/bass/other) via Demucs or Spleeter |
+| 📦 Gig USB Export | One-click pack: audio + Rekordbox XML + Serato + M3U8 + covers |
+
+Full bilingual UI (English / 中文) toggled in the sidebar — all 170+ strings translated.
 
 See [中文](#中文) section above for full installation and usage instructions.
 
